@@ -21,6 +21,7 @@
 #include <cassert>
 #include <stack>
 #include "suffixtree.h"
+#include "motif.h"
 
 using namespace std;
 
@@ -193,7 +194,9 @@ STPosition SuffixTree::splitEdge(const STPosition& pos)
         STNode *chd = pos.node;
         STNode *par = chd->getParent();
         STNode *mid = new STNode(chd->begin(), chd->begin() + pos.offset);
+        mid->setOccurence(chd->getOccurence());
         chd->setBegin(mid->end());
+
 
         // set the correct pointers
         par->setChild(T[mid->begin()], mid);
@@ -207,6 +210,12 @@ void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex)
         STNode *leaf = new STNode(suffixIndex + pos.getDepth(), T.size());
         leaf->setSuffixIdx(suffixIndex);
         pos.node->setChild(T[suffixIndex + pos.getDepth()], leaf);
+        // std::cerr << "added new leaf:" << T.substr(suffixIndex + pos.getDepth()) << " ";
+}
+void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex, unsigned char currentbit)
+{
+        addLeaf(pos, suffixIndex);
+        pos.node->getChild(T[suffixIndex + pos.getDepth()])->setOccurenceBitForGST(currentbit);
 }
 
 length_t SuffixTree::recComputeSLPhase1(STNode* node, vector<STNode*>& A)
@@ -284,7 +293,7 @@ std::ostream& SuffixTree::write(std::ostream& o) const
                 STNode* node = stack.top().second;
                 stack.pop();
 
-                for (length_t i = 0; i < depth; i++)
+                for (int i = 0; i < depth; i++)
                         cout << "  ";
                 string nodeDescr = (node->isLeaf())? "LEAF " : "INTL ";
                 if (node == root)
@@ -292,7 +301,7 @@ std::ostream& SuffixTree::write(std::ostream& o) const
 
                 o << nodeDescr << "\""
                   << T.substr(node->begin(), node->getEdgeLength()) << "\""
-                  << ", depth=" << node->getDepth();
+                  << ", depth=" << node->getDepth() << ", occ: " << node->getOccurence();
 
                 if (!node->isLeaf() && node != root && node->getSuffixLink() != NULL)
                         o << " (SL: \"" << posToStr(node->getSuffixLink()) << "\")";
@@ -336,6 +345,11 @@ void SuffixTree::constructNaive()
         computeSuffixLinks();
 }
 
+/**
+I add occurence tables in every leaf node, while keeping the parents satisfied (if bit is not set in parent set in parent, until parent == null or bit is set)
+When we split a branch, I copy the bitset of the child (can be a leaf or a node) to the mid node (parent should already be fine since this isnt a new node)
+And then add the new bit to the addleaf as we do normally, recursing through parents.
+*/
 void SuffixTree::constructUkonen()
 {
         // create root node with an empty range (it has no parent)
@@ -343,14 +357,23 @@ void SuffixTree::constructUkonen()
 
         // algorithm invariant: pos points to T[i:j-1[
         STPosition pos(root);
+        unsigned char currentleafbit = 0; // supports up to 255 strings!
 
         // in phase j, build implicit suffix tree for prefix T[0:j[
         for (size_t j = 1, numLeaves = 0; j <= T.size(); j++) {
+                // std::cout << "current j " << j << " is at " << T[j] << std::endl;
                 STNode *prevInternal = NULL;
+                // i starts from numleaves -> keep the current bit to set in a variable!
 
                 // skip 'numleafs' times rule 1 (extension of leaf)
+                unsigned char currentbit = currentleafbit;
                 for (size_t i = numLeaves; i < j; i++) {
+                        // std::cout << "current i " << i << " is at " << T[i] << std::endl;
                         // note that pos will always point to T[i:j-1[ at this point
+                        // TODO add gst occurency table
+                        // if t[i] == # then set bit of currentbit + increment currentbit
+                        // add bit to existing nodes
+
 
                         // add a SL from the previously created internal node
                         if (prevInternal != NULL && pos.atNode()) {
@@ -359,24 +382,113 @@ void SuffixTree::constructUkonen()
                         }
 
                         // try and add character T[j-1]
-                        if (advancePos(pos, T[j-1]))
-                                break; // rule 3 : do nothing + show stopper
+                        if (advancePos(pos, T[j-1])) {
+                            if(numLeaves != i && T[i] == '#') { // only increment one if i == numleaves
+                                // std::cout << "incrementing currentbit at " << T[i] << std::endl;
+                                currentbit++;
+                            } // increment currentbit for next iteration in for loop.
+                            // std::cerr << "break at " << i << std::endl;
+                            break; // rule 3 : do nothing + show stopper
+
+                        }
 
                         // rule 2 : create internal node (optionally) and leaf
                         if (!pos.atNode()) {
-                                pos = splitEdge(pos); // pos points to new node
+                                pos = splitEdge(pos); // pos points to new node // TODO add currentbit variable
                                 if (prevInternal != NULL)
                                         prevInternal->setSuffixLink(pos.node);
                                 prevInternal = pos.node;
                         }
 
-                        addLeaf(pos, i);
-                        numLeaves++;
+                        addLeaf(pos, i, currentbit); // TODO add currentbit variable
+                        if(T[numLeaves] == '#') {
+                            // std::cout << "incrementing currentleafbit at " << T[numLeaves] << std::endl;
+                            currentleafbit++;
+                        } // if previous character where the suffix starts is # then a new string has started so increment currentleafbit
+                        if(T[i] == '#') {
+                            // std::cout << "incrementing currentbit at " << T[i] << std::endl;
+                            currentbit++;
+                        } // increment currentbit for next iteration in for loop.
 
                         // extension is complete: follow suffix link
                         pos = followSuffixLink(pos);
+
+                        numLeaves++;
+                        // std::cerr << *this << std::endl;
                 }
         }
+}
+
+// Routines to explore SuffixTree
+
+/**
+
+Recurse into the tree with degenerate letters, meaning we need a vector of positions we are currently at!
+with 3 N's the most number of positions is 4*4*4= 64 positions to check.
+To check validity of the motif with regard to the BLS score, we do the or operation on the mask of every position and then check this occurence bitset in the bls score function.
+If score is equal to or more than the threshold then we keep the motif if its less we should stop the recursion!
+*/
+void SuffixTree::recPrintMotifs(const std::pair<short, short>& l, const std::vector<IupacMask>& alphabet,
+    const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, const std::vector<STPosition>& positions,
+    const std::string& currentMotif, const float blsScore,  int curDegenerateLetters, std::ostream& out) const
+{
+    // std::cerr << "currentMotif [" << currentMotif;
+    // std::cerr << "currentMotif [" <<currentMotif << "\t" << blsScore << "]";
+    if((unsigned char) currentMotif.length() >= l.first) {
+        std::string representation = currentMotif;
+        out << SuffixTree::printSortedString(representation) << "\t" << currentMotif << "\t" << blsScore << "\t" << std::endl;
+    } // currentMotif is part of the printable
+    // return if length is l.second - 1, since we cannot extend anymore then
+    if((unsigned char) currentMotif.length() == l.second - 1) { return; }
+    // std::cerr << " can be extended" << std::endl;
+    // extend with possible characters in alphabet
+    std::vector<char> chars;
+    std::vector<STPosition> newpositions;
+    int degenerateCount;
+    for (IupacMask extension : alphabet) {
+        // std::cerr << currentMotif << " + " << extension << std::endl;
+        // increment position in positions list if possible
+        degenerateCount = extension.isDegenerate() ? curDegenerateLetters + 1 : curDegenerateLetters;
+        if(degenerateCount > maxDegenerateLetters) { continue; } // cannot extend this degenerate character
+        extension.getCharacters(chars); // chars is cleared in this function
+        std::bitset<N_BITS> occurence(0);
+        newpositions.clear();
+        for(STPosition p : positions) {
+            for(char c : chars) { // these are the chars that belong to the iupac character extension!!
+                if (p.atNode()) {
+                    // if p extended the full branch then go to child node with char c
+                    STNode *child = p.node->getChild(c);
+                    if(child != NULL) {
+                        newpositions.push_back(STPosition(child, 1));
+                        occurence = occurence | child->getOccurence();
+                        // std::cerr << "update occ " << occurence << std::endl;
+                    }
+                } else {
+                    // case b) we are at an edge: try and match next character along edge
+                    if (T[p.node->begin() + p.offset] == c) {
+                        // std::cerr << currentMotif << " extension to child " << c << " at " << p.node->begin() << " + " << p.offset<< std::endl;
+                        occurence = occurence | p.node->getOccurence();
+                        // std::cerr << "update occ " << occurence << std::endl;
+                        newpositions.push_back(STPosition(p.node, p.offset + 1));
+                    }
+
+                }
+            }
+        }
+        // can be extended if at least one new position is found!
+        if(newpositions.size() > 0) {
+            // std::cout << currentMotif << " -> " << extension << " has " << newpositions.size() << " paths : ";
+            // for (auto tmpp : newpositions) { std::cout << " at " << tmpp.node->begin() << " + " << tmpp.offset << " - ";}
+            // std::cout << std::endl;
+            float childBlsScore = bls.getBLSScore(occurence);
+            // std::cerr << "occ " << occurence << " for " << (currentMotif + extension.getRepresentation()) << " gives a bls score of " << childBlsScore << std::endl;
+            if(childBlsScore >= blsThreshold) {
+                recPrintMotifs(l, alphabet, maxDegenerateLetters, bls, blsThreshold, newpositions, currentMotif + extension.getRepresentation(), childBlsScore, degenerateCount, out);
+            }
+        }
+    }
+    newpositions.clear();
+    chars.clear();
 }
 
 // ============================================================================
@@ -413,6 +525,42 @@ SuffixTree::~SuffixTree()
                 delete node;
         }
 }
+
+void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, std::ostream& out)
+{
+        std::vector<IupacMask> alphabet_;
+        if(alphabet == EXACT) {
+            assert(maxDegenerateLetters == 0); // cannot have degenerate letters with exact alphabet
+        }
+        if(alphabet == EXACT || alphabet == EXACTANDN || alphabet == TWOFOLDSANDN) {
+            alphabet_.push_back(IupacMask(BASE_A));
+            alphabet_.push_back(IupacMask(BASE_C));
+            alphabet_.push_back(IupacMask(BASE_G));
+            alphabet_.push_back(IupacMask(BASE_T));
+        }
+        if (alphabet == TWOFOLDSANDN) {
+            alphabet_.push_back(IupacMask(IUPAC_R)); // A or G
+            alphabet_.push_back(IupacMask(IUPAC_Y)); // C or T
+            alphabet_.push_back(IupacMask(IUPAC_S)); // G or C
+            alphabet_.push_back(IupacMask(IUPAC_W)); // A or T
+            alphabet_.push_back(IupacMask(IUPAC_K)); // G or T
+            alphabet_.push_back(IupacMask(IUPAC_M)); // A or C
+        }
+        if (alphabet == TWOFOLDSANDN || alphabet == EXACTANDN) {
+            alphabet_.push_back(IupacMask(IUPAC_N));
+        }
+        // std::cerr << "alphabet [" << alphabet_.size() << "]: ";
+        // for ( auto c : alphabet_) {
+        //     std::cerr << c << " ";
+        // }
+        // std::cerr << std::endl;
+        // std::cerr << "ref: " << T << std::endl;
+        // std::cerr << "-------------------------" << std::endl;
+        std::vector<STPosition> positions = {STPosition(root)};
+        recPrintMotifs(l, alphabet_, maxDegenerateLetters, bls, blsThreshold, positions, "", 1.0, 0, out);
+
+}
+
 
 void SuffixTree::matchPattern(const string& P, vector<size_t>& occ)
 {

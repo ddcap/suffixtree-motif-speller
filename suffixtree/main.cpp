@@ -19,9 +19,11 @@
 
 #include <iostream>
 #include <fstream>
-#include "suffixtree.h"
+#include <bitset>
+#include "genefamily.h"
 
 using namespace std;
+
 
 void readInput(const string& filename, string& T)
 {
@@ -45,38 +47,33 @@ void readInput(const string& filename, string& T)
 int main(int argc, char* argv[])
 {
         if (argc != 2)
-                throw runtime_error("Program requires an input text as an argument");
+            throw runtime_error("Program requires an input text as an argument");
 
-        cout << "Reading input..." << endl;
-        string T;
-        readInput(argv[1], T);
+        GeneFamily::readOrthologousFamily(argv[1]);
 
-        cout << "Building suffix tree..." << endl;
-        SuffixTree ST(T);
-
-        while (true) {
-                cout << "Type a word: ";
-                string word;
-                cin >> word;
-
-                vector<size_t> occ;
-                ST.matchPattern(word, occ);
-                cout << "Found " << occ.size() << " occurrences." << endl;
-                for (auto pos : occ) {
-                        size_t begin = pos;
-                        while (begin > 0 && T[begin-1] != '#')
-                                begin--;
-
-                        size_t end = pos;
-                        while (end+1 < T.size() && T[end+1] != '#')
-                                end++;
-
-                        cout << "* " << T.substr(begin, end-begin+1) << endl;
-                }
-
-        }
-
-        cout << "Bye..." << endl;
+        // while (true) {
+        //         cout << "Type a word: ";
+        //         string word;
+        //         cin >> word;
+        //
+        //         vector<size_t> occ;
+        //         ST.matchPattern(word, occ);
+        //         cout << "Found " << occ.size() << " occurrences." << endl;
+        //         for (auto pos : occ) {
+        //                 size_t begin = pos;
+        //                 while (begin > 0 && T[begin-1] != '#')
+        //                         begin--;
+        //
+        //                 size_t end = pos;
+        //                 while (end+1 < T.size() && T[end+1] != '#')
+        //                         end++;
+        //
+        //                 cout << "* " << T.substr(begin, end-begin+1) << endl;
+        //         }
+        //
+        // }
+        //
+        // cout << "Bye..." << endl;
 
         return EXIT_SUCCESS;
 }

@@ -1,0 +1,7 @@
+cmd: make
+
+cwd: /home/ddecap/source/CCB/suffixtree/build
+
+name: "suffixtree"
+
+sh: true

@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <bits/stdc++.h>
+#include "motif.h"
 
 // ============================================================================
 // (TYPE) DEFINITIONS AND PROTOTYPES
@@ -34,6 +36,9 @@ typedef uint32_t length_t;
 
 // <position in T, position in Q, length of MEM>
 typedef std::tuple<size_t, size_t, size_t> MEMOcc;
+
+enum Alphabet { EXACT, TWOFOLDSANDN, EXACTANDN };
+
 
 #define MAX_CHAR 256
 
@@ -47,7 +52,6 @@ typedef std::tuple<size_t, size_t, size_t> MEMOcc;
 
 // A suffix tree node also contains a range [beginIdx, endIdx[ in T of its
 // parent edge. The range encodes the characters implied on the edge.
-
 class STNode {
 
 private:
@@ -61,6 +65,7 @@ private:
         STNode* suffixLink;             // points to suffix link node
         length_t depth;                 // depth of current node
         length_t suffixIdx;             // suffix index (only for leaf nodes)
+        std::bitset<N_BITS> occurence;
 
 public:
         /**
@@ -68,13 +73,31 @@ public:
          * @param begin Begin index in T
          * @param end End index in T
          */
-        STNode(length_t begin, length_t end) : beginIdx(begin), endIdx(end) {
+        STNode(length_t begin, length_t end) : beginIdx(begin), endIdx(end), occurence(0) {
                 parent = NULL;
                 for (int i = 0; i < MAX_CHAR; i++)
                         child[i] = NULL;
                 suffixLink = NULL;
                 depth = end - begin;
                 suffixIdx = std::numeric_limits<length_t>::max();
+        }
+
+
+        /**
+         * Sets the bit for string number 'occurenceBit' to true in a GST
+         * @return occurenceBit is the number of the current string this suffix belongs to
+         */
+        void setOccurenceBitForGST(unsigned char occurenceBit) { // used in leaf
+            occurence.set(occurenceBit / 2); // /2 to take into account Reverse complement!
+            if(parent != NULL && !parent->occurence.test(occurenceBit / 2)) { // if parent and parent hasnt got this occurence set it!
+              parent->setOccurenceBitForGST(occurenceBit);
+            }
+        }
+        void setOccurence(std::bitset<N_BITS> occurence_) {
+            occurence = occurence_;
+        }
+        std::bitset<N_BITS> getOccurence() {
+          return occurence;
         }
 
         /**
@@ -370,6 +393,7 @@ private:
          * @param suffixIndex
          */
         void addLeaf(const STPosition& pos, length_t suffixIndex);
+        void addLeaf(const STPosition& pos, length_t suffixIndex, unsigned char currentbit);
 
         /**
          * Step 1 of the Maass algorithm for the computation of suffix links
@@ -419,6 +443,17 @@ private:
         STNode* root;                   // pointer to the root node
         // --------------------------------------------------------------------
 
+        void recPrintMotifs(const std::pair<short, short>& l, const std::vector<IupacMask>& alphabet,
+          const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold,
+          const std::vector<STPosition>& positions,
+          const std::string& currentMotif, const float blsScore,
+          int curDegenerateLetters, std::ostream& out) const;
+
+        static std::string printSortedString(std::string &str)  {
+          std::sort(str.begin(), str.end());
+          return str;
+        }
+
 public:
         /**
          * Constructor
@@ -456,6 +491,14 @@ public:
         friend std::ostream& operator<< (std::ostream& o, const SuffixTree& t) {
                 return t.write(o);
         }
+
+        /**
+        * Find all motifs in the Suffix tree of length l
+        * @Param l Length of motifs to find
+        * @Param motifs STPositions of different motifs in T (output)
+        */
+        // TODO add max number of degenration and what type (enumeration)
+        void printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, std::ostream& out);
 };
 
 #endif
