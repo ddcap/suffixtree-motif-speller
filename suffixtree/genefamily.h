@@ -11,9 +11,6 @@
 
 class GeneFamily {
 private:
-    static const std::vector<unsigned char> complement;
-
-    static std::string RC(std::string read);
 
 public:
   static void readOrthologousFamily(const std::string& filename);

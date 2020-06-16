@@ -24,6 +24,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <cassert>
 #include <bits/stdc++.h>
 #include "motif.h"
@@ -87,10 +88,10 @@ public:
          * Sets the bit for string number 'occurenceBit' to true in a GST
          * @return occurenceBit is the number of the current string this suffix belongs to
          */
-        void setOccurenceBitForGST(unsigned char occurenceBit) { // used in leaf
-            occurence.set(occurenceBit / 2); // /2 to take into account Reverse complement!
-            if(parent != NULL && !parent->occurence.test(occurenceBit / 2)) { // if parent and parent hasnt got this occurence set it!
-              parent->setOccurenceBitForGST(occurenceBit);
+        void setOccurenceBitForGST(unsigned char occurenceBit, int reverseComplementFactor) { // used in leaf
+            occurence.set(occurenceBit / reverseComplementFactor); // /2 to take into account Reverse complement!
+            if(parent != NULL && !parent->occurence.test(occurenceBit / reverseComplementFactor)) { // if parent and parent hasnt got this occurence set it!
+              parent->setOccurenceBitForGST(occurenceBit, reverseComplementFactor);
             }
         }
         void setOccurence(std::bitset<N_BITS> occurence_) {
@@ -256,6 +257,9 @@ public:
                 assert(offset <= node->getEdgeLength());
         }
 
+        std::bitset<N_BITS> getOccurence() {
+          return node->getOccurence();
+        }
         /**
          * Check whether position points to a node (true) or edge (false)
          * @return True or false
@@ -264,6 +268,9 @@ public:
                 return offset == node->getEdgeLength();
         }
 
+        size_t getPositionInText() const {
+          return node->getParent() == NULL ? -1 : node->begin() + offset; // -1 for root node, else position in string
+        }
         /**
          * Get the depth of the position
          * @return Depth of the position
@@ -278,7 +285,7 @@ public:
          * @param rhs Right hand side
          * @return true or false
          */
-        bool operator==(const STPosition& rhs) {
+        bool operator==(const STPosition& rhs) const {
                 if (node != rhs.node)
                         return false;
                 if (offset != rhs.offset)
@@ -296,6 +303,12 @@ public:
         }
 
         friend class SuffixTree;
+};
+
+struct STPositionHash {
+   size_t operator() (const STPosition &pos) const {
+     return pos.getPositionInText();
+   }
 };
 
 // ============================================================================
@@ -441,13 +454,21 @@ private:
         // --------------------------------------------------------------------
         const std::string T;            // text to index
         STNode* root;                   // pointer to the root node
+        static const std::vector<IupacMask> exactAlphabet;
+        static const std::vector<IupacMask> exactAndNAlphabet;
+        static const std::vector<IupacMask> exactTwofoldAndNAlphabet;
+        const std::vector<IupacMask> *alphabet;
+        int reverseComplementFactor = 1;
         // --------------------------------------------------------------------
 
-        void recPrintMotifs(const std::pair<short, short>& l, const std::vector<IupacMask>& alphabet,
+        void recPrintMotifs(const std::pair<short, short>& l,
           const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold,
-          const std::vector<STPosition>& positions,
+          const std::unordered_set<STPosition, STPositionHash>& positions,
           const std::string& currentMotif, const float blsScore,
-          int curDegenerateLetters, std::ostream& out) const;
+          int curDegenerateLetters, MotifCollection& processed, std::ostream& out) const;
+
+        void advanceIupacCharacter(IupacMask mask, const std::unordered_set<STPosition, STPositionHash>& currentPositions,
+                             std::unordered_set<STPosition, STPositionHash>& newPositions, std::bitset<N_BITS>& occurence) const;
 
         static std::string printSortedString(std::string &str)  {
           std::sort(str.begin(), str.end());
@@ -459,7 +480,8 @@ public:
          * Constructor
          * @param T Text to be indexed
          */
-        SuffixTree(const std::string& T);
+        SuffixTree(const std::string& T) : SuffixTree(T, false) {}
+        SuffixTree(const std::string& T, bool hasReverseComplement);
 
         /**
          * Destructor
@@ -472,6 +494,9 @@ public:
          * @param occ Start positions of the occurrences in T (output)
          */
         void matchPattern(const std::string& P, std::vector<size_t>& occ);
+        void matchIupacPattern(const std::string& P, std::unordered_set<STPosition, STPositionHash>& positions, std::bitset<N_BITS>& occurence);
+        void matchPattern(const std::string& P, BLSScore& bls);
+
 
         /**
          * Find the Maximal Exact Matches between T and P in O(m + #RMEMs) time
@@ -499,6 +524,7 @@ public:
         */
         // TODO add max number of degenration and what type (enumeration)
         void printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, std::ostream& out);
+
 };
 
 #endif

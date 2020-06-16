@@ -7,11 +7,59 @@
 #include <random>
 #include "motif.h"
 
+//MOTIF
+
+const std::vector<unsigned char> Motif::complement ({
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 48
+    0, 'T', 'V', 'G', 'H', 0, 0, 'C', 'D', 0, 0, 'M', 0, 'K', 'N', 0, // 64
+    0, 0, 'Y', 'S', 'A', 0, 'B', 'W', 0, 'R' // 80
+});
+
+std::string Motif::ReverseComplement(std::string read) {
+    std::string rc = "";
+    for(int i = read.length() - 1; i>=0; i--) {
+        rc += complement[read[i]];
+    }
+    return rc;
+}
+
+bool Motif::isRepresentative(std::string read) {
+    size_t i = 0;
+    while (i < read.length() && read[i] == complement[read[read.length() - 1 - i]]) {
+        i++;
+    }
+    return read[i] < complement[read[read.length() - 1 - i]];
+}
+
+std::string Motif::getRepresentative(std::string read) {
+    size_t i = 0;
+    std::string rc = "";
+    char rci = complement[read[read.length() - 1 - i]];
+    while (i < read.length() && read[i] == rci) {
+        rc += rci;
+        i++;
+        rci = complement[read[read.length() - 1 - i]];
+    }
+    if (read[i] < rci) {
+        return read;
+    } else {
+        // return rc!!
+        while (i < read.length()) {
+            rc += rci;
+            i++;
+            rci = complement[read[read.length() - 1 - i]];
+        }
+        return rc;
+    }
+}
 
 //BLSLinkedListNode<N>
 template<unsigned char N>
 float BLSLinkedListNode<N>::getScore(const std::bitset<N>& occurence) {
-    if(occurence.count() == 1) return 0.0f;
+    if(occurence.count() <= 1) return 0.0f;
     // loop over next
     float score = 0.0f;
     int count = 0;
@@ -43,23 +91,32 @@ float BLSLinkedListNode<N>::getScore(const std::bitset<N>& occurence) {
     return score;
 }
 
-template<unsigned char N>
-std::ostream& BLSLinkedListNode<N>::write(std::ostream& o) const {
-    for(int i = 0; i < level; i++ ) { o << "  "; }
-    o << "[" << mask << "/" << length << "]"; // print this actual node
-    if(child != NULL) {
-        o << std::endl;
-        o << *child;
-    }
-    if(next != NULL) {
-        o << std::endl;
-        o << *next;
-    }
-    return o;
-}
+// template<unsigned char N>
+// std::ostream& BLSLinkedListNode<N>::write(std::ostream& o) const {
+//     for(int i = 0; i < level; i++ ) { o << "  "; }
+//     o << "[" << mask << "/" << length << "]"; // print this actual node
+//     if(child != NULL) {
+//         o << std::endl;
+//         o << *child;
+//     }
+//     if(next != NULL) {
+//         o << std::endl;
+//         o << *next;
+//     }
+//     return o;
+// }
 
 
 // BLSSCORE
+void BLSScore::prepAllCombinations() {
+    // precalculate all combinations of occurence
+    for (int i = 0; i < pow(2, N_BITS); i++) {
+        std::bitset<N_BITS> occurence(i);
+        preparedBLS.push_back(calculateBLSScore(occurence));
+        // std::cerr << "prepping " << occurence << " => " << occurence.to_ulong() << " " << preparedBLS[i] << std::endl;
+    }
+}
+
 void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode<N_BITS>* currentroot) {
 
     // int startleafcount = leafcount;
@@ -117,36 +174,46 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
 }
 
 
-float BLSScore::getBLSScore(std::bitset<N_BITS> occurence) const {
+float BLSScore::calculateBLSScore(std::bitset<N_BITS> occurence) const {
     return root->getChild()->getScore(occurence); // root has no next but only children! so first branch is of length 0 with 11111 so always true!
+}
+float BLSScore::getBLSScore(std::bitset<N_BITS> occurence) const {
+    return preparedBLS[occurence.to_ulong()];
 }
 
 // IUPACMASK
-void IupacMask::getCharacters(std::vector<char>& chars) {
-    chars.clear();
-    if (0x1 & mask) { chars.push_back('A'); }
-    if (0x2 & mask) { chars.push_back('C'); }
-    if (0x4 & mask) { chars.push_back('G'); }
-    if (0x8 & mask) { chars.push_back('T'); }
+const std::vector<char>* IupacMask::getCharacters() {
+    return &characterLists[mask];
 }
+const std::vector<IupacMask> IupacMask::characterToMask ({
+    IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), // 0
+    IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), // 16
+    IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), // 32
+    IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), IupacMask(), // 48
+    IupacMask(), IupacMask(BASE_A), IupacMask(IUPAC_B), IupacMask(BASE_C), IupacMask(IUPAC_D), IupacMask(), IupacMask(), IupacMask(BASE_G), IupacMask(IUPAC_H), IupacMask(), IupacMask(), IupacMask(IUPAC_K), IupacMask(), IupacMask(IUPAC_M), IupacMask(IUPAC_N), IupacMask(), // 64
+    IupacMask(), IupacMask(), IupacMask(IUPAC_R), IupacMask(IUPAC_S), IupacMask(BASE_T), IupacMask(), IupacMask(IUPAC_V), IupacMask(IUPAC_W), IupacMask(), IupacMask(IUPAC_Y) // 80
+});
+const std::vector<std::vector<char>> IupacMask::characterLists (
+{
+    {}, // 0!!
+    {'A'},
+    {'C'},
+    {'A', 'C'},
+    {'G'},
+    {'A', 'G'},
+    {'G', 'C'},
+    {'A', 'C', 'G'},
+    {'T'},
+    {'A', 'T'},
+    {'C', 'T'},
+    {'A', 'C', 'T'},
+    {'G', 'T'},
+    {'A', 'G', 'T'},
+    {'C', 'G', 'T'},
+    {'A', 'C', 'G', 'T'},
+});
+const std::vector<char> IupacMask::representation ({ 0, 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'T', 'W', 'Y', 'H', 'K', 'D', 'B', 'N' });
 
 char IupacMask::getRepresentation() const {
-    switch (mask) {
-    case BASE_A:  return 'A';
-    case BASE_C:  return 'C';
-    case IUPAC_M: return 'M';
-    case BASE_G:  return 'G';
-    case IUPAC_R: return 'R';
-    case IUPAC_S: return 'S';
-    case IUPAC_V: return 'V';
-    case BASE_T:  return 'T';
-    case IUPAC_W: return 'W';
-    case IUPAC_Y: return 'Y';
-    case IUPAC_H: return 'H';
-    case IUPAC_K: return 'K';
-    case IUPAC_D: return 'D';
-    case IUPAC_B: return 'B';
-    case IUPAC_N: return 'N';
-    default: return 'N';
-    }
+    return representation[mask];
 }

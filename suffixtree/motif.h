@@ -7,9 +7,10 @@
 #include <iostream>
 #include <bitset>
 #include <random>
+#include <unordered_set>
 
 
-#define N_BITS 4
+#define N_BITS 4 // must be at least the maximum number of organisms
 
 enum IUPAC {
     BASE_A =  0x1,
@@ -45,6 +46,32 @@ if only one branch is 0, cause it doesnt connect to others
 11 --> score is 0.6!
 */
 
+class Motif {
+private:
+    static const std::vector<unsigned char> complement;
+
+public:
+    static std::string ReverseComplement(std::string read);
+    static bool isRepresentative(std::string);
+    static std::string getRepresentative(std::string);
+};
+
+class MotifCollection {
+private:
+    std::unordered_set<std::string> processedMotifs; // average constant time adding + searching!
+
+public:
+    bool checkAndAddElement(std::string motif) {
+        if(processedMotifs.find(motif) == processedMotifs.end()) {
+            processedMotifs.insert(motif);
+            return false;
+        } else {
+            return true;
+        }
+    }
+    size_t size() { return processedMotifs.size(); }
+};
+
 template<unsigned char N>
 class BLSLinkedListNode {
 private:
@@ -53,7 +80,19 @@ private:
     BLSLinkedListNode<N> *next;
     BLSLinkedListNode<N> *child;
     int level;
-    std::ostream& write(std::ostream& o) const;
+    std::ostream& write(std::ostream& o) const{
+        for(int i = 0; i < level; i++ ) { o << "  "; }
+        o << "[" << mask << "/" << length << "]"; // print this actual node
+        if(child != NULL) {
+            o << std::endl;
+            o << *child;
+        }
+        if(next != NULL) {
+            o << std::endl;
+            o << *next;
+        }
+        return o;
+    }
 public:
     BLSLinkedListNode<N>(): length(0), mask(0), next(NULL), child(NULL), level(0) {
         mask.flip(); // root node (all 1!)
@@ -84,8 +123,11 @@ public:
 class BLSScore {
 private:
     BLSLinkedListNode<N_BITS>* root;
+    std::vector<float> preparedBLS;
 
+    float calculateBLSScore(std::bitset<N_BITS> occurence) const;
     void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode<N_BITS>* currentroot);
+    void prepAllCombinations();
 
 public:
     // example: ((BD1G15520:0.2688, OS03G38520:0.2688):0.0538, (SB01G015780:0.086, (ZM01G45380:1.0E-6,ZM05G08300:1.0E-6):0.086):0.2366);
@@ -93,6 +135,7 @@ public:
         root = new BLSLinkedListNode<N_BITS>();
         int leafnr = 0;
         recReadBranch(0, leafnr, newick, root);
+        prepAllCombinations();
     }
     ~BLSScore() {
         delete root;
@@ -107,17 +150,21 @@ public:
 class IupacMask {
 private:
     unsigned char mask;
+    static const std::vector<std::vector<char>> characterLists;
+    static const std::vector<char> representation;
 
 public:
-    IupacMask(const IUPAC mask_ ) : mask(mask_) {
+    static const std::vector<IupacMask> characterToMask;
+    IupacMask() : mask(0) {}
+    IupacMask(const IUPAC mask_ ) : mask(mask_) {}
 
-    }
+    unsigned char getMask() { return mask; }
 
     bool isDegenerate() {
-        return __builtin_popcountll(mask) > 1;
+        return __builtin_popcountll(mask) > 1; // relies on the gcc builtin popcount
     }
 
-    void getCharacters(std::vector<char>& chars);
+    const std::vector<char>* getCharacters();
 
     char getRepresentation() const;
 
