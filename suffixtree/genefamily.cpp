@@ -25,6 +25,7 @@ void GeneFamily::readOrthologousFamily(const std::string& filename) {
 void GeneFamily::readOrthologousFamily(std::istream& ifs) {
   std::pair<short, short> l(6, 13);
   int maxDegeneration = 3;
+  int totalCount = 0;
   while (ifs) {
     // READ DATA
     std::string T, newick, line, name;
@@ -51,7 +52,9 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs) {
     BLSScore bls(newick);
     SuffixTree ST(T, true);
     int count = ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
+    totalCount += count;
     double elapsed = stopChrono();
     std::cerr << "[" << name << "] counted " << count << " motifs in " << elapsed << "s" << std::endl;
   }
+  std::cerr << "total motifs iterated: " << totalCount << std::endl;
 }
