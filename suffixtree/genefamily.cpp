@@ -23,12 +23,13 @@ void GeneFamily::readOrthologousFamily(const std::string& filename) {
 }
 
 void GeneFamily::readOrthologousFamily(std::ifstream& ifs) {
-  std::string T, newick, line;
+  std::string T, newick, line, name;
   int N;
   while (ifs) {
     // read the name
     getline(ifs, line);
     if(line.empty()) {continue;}
+    name = line;
     // std::cerr << "processing "<< line;
     getline(ifs, newick);
     getline(ifs, line);
@@ -76,38 +77,46 @@ void GeneFamily::readOrthologousFamily(std::ifstream& ifs) {
   // for(int i =0; i < count; i++) {
   //     testset.push_back(bls.random_bitset(4));
   // }
-  // startChrono();
   // for(int j =0; j < 10; j++) {
   //   for(int i =0; i < count; i++) {
   //       bls.getBLSScore(testset[i]);
   //   }
   // }
-  // double elapsed = stopChrono();
-  // std::cout << "Time for " << count << " bls scores: " << elapsed << std::endl;
+
+
 
 
 // create ST
   // std::cerr << "Building suffix tree..." << std::endl;
+    startChrono();
     SuffixTree ST(T, true);
   // std::string word = "AAAATCTTGTTT";
   // ST.matchPattern(word, bls);
 
-    // std::string iupacword = "AAAAKMTKGTTT";
-    // std::bitset<N_BITS> occurence(0);
-    // std::unordered_set<STPosition, STPositionHash> positions;
-    // ST.matchIupacPattern(iupacword, positions, occurence);
+    // std::string iupacword = "TNAGCN";
+    // occurence_bits occurence(0);
+    // std::vector<STPosition> positions = ST.matchIupacPattern(iupacword, 3, occurence);
     //
     // if(!positions.empty()) {
-    // std::cerr << iupacword << " found with occurence " << occurence << " at " << positions.size() << " locations" << std::endl;
-    // for(auto p : positions) {
-    //     std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
+    //     std::cerr << iupacword << " found with occurence " << occurence << " [" << bls.getBLSScore(occurence) << "] at " << positions.size() << " locations" << std::endl;
+    //     for(auto p : positions) {
+    //         std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
+    //     }
     // }
-    // }
-    // std::string iupacword2 = "AAACMAKMTTTT";
+    // std::string iupacword2 = "AAACMAKNTTTT";
     // ST.matchIupacPattern(iupacword2, positions, occurence);
     //
     // if(!positions.empty()) {
-    //   std::cerr << iupacword2 << " found with occurence " << occurence << " at " << positions.size() << " locations" << std::endl;
+    //   std::cerr << iupacword2 << " found with occurence " << occurence << " [" << bls.getBLSScore(occurence) << "] at " << positions.size() << " locations" << std::endl;
+    //   for(auto p : positions) {
+    //       std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
+    //   }
+    // }
+    // std::string iupacword3 = "AAAANMTKGTTT";
+    // ST.matchIupacPattern(iupacword3, positions, occurence);
+    //
+    // if(!positions.empty()) {
+    //   std::cerr << iupacword3 << " found with occurence " << occurence << " [" << bls.getBLSScore(occurence) << "] at " << positions.size() << " locations" << std::endl;
     //   for(auto p : positions) {
     //       std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
     //   }
@@ -116,10 +125,11 @@ void GeneFamily::readOrthologousFamily(std::ifstream& ifs) {
   // std::cerr << ST << std::endl;
   std::pair<short, short> l(6, 13);
   int maxDegeneration = 3;
-  float minBlsScore = 0.15; // min threshold
-  std::ofstream myfile;
-  myfile.open ("/tmp/motifs.txt");
-  ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, minBlsScore, myfile);
-  myfile.close();
+  // std::ofstream myfile;
+  // myfile.open ("/tmp/motifs.txt");
+  ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
+  // myfile.close();
+  double elapsed = stopChrono();
+  std::cerr << "time for iterating motifs: " << elapsed << std::endl;
 
 }

@@ -1,15 +1,10 @@
 
 
-#include <vector>
-#include <stack>
-#include <iostream>
-#include <bitset>
-#include <random>
 #include "motif.h"
 
 //MOTIF
 
-const std::vector<unsigned char> Motif::complement ({
+const std::vector<char> Motif::complement ({
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32
@@ -18,7 +13,7 @@ const std::vector<unsigned char> Motif::complement ({
     0, 0, 'Y', 'S', 'A', 0, 'B', 'W', 0, 'R' // 80
 });
 
-std::string Motif::ReverseComplement(std::string read) {
+std::string Motif::ReverseComplement(const std::string& read) {
     std::string rc = "";
     for(int i = read.length() - 1; i>=0; i--) {
         rc += complement[read[i]];
@@ -26,15 +21,63 @@ std::string Motif::ReverseComplement(std::string read) {
     return rc;
 }
 
-bool Motif::isRepresentative(std::string read) {
+std::string Motif::getGroupID(const std::string& read) {
+      std::string tmp = read;
+      std::sort(tmp.begin(), tmp.end());
+      return tmp;
+}
+
+bool Motif::isRepresentative(const std::string& read) {
     size_t i = 0;
     while (i < read.length() && read[i] == complement[read[read.length() - 1 - i]]) {
         i++;
     }
-    return read[i] < complement[read[read.length() - 1 - i]];
+    // if the same, ie i == read.length -> RC wont be matched in the tree since it is the same!!1 so no need to save them to check if it already has passed in the motifs.
+    return i== read.length() || read[i] < complement[read[read.length() - 1 - i]];
+}
+bool Motif::isGroupRepresentative(const std::string& read) {
+    std::string rc = ReverseComplement(read);
+    std::sort(rc.begin(), rc.end());
+    return read <= rc;
 }
 
-std::string Motif::getRepresentative(std::string read) {
+void Motif::writeGroupIDAndMotifInBinary(const std::string& read, std::ostream& out) {
+    char size = read.length(); // assumes length isnt more than 255 chars
+    // write size
+    out.write(&size, 1);
+    char numberOfBytes = size / 2;
+
+    //write Motif
+    for(int i = 0; i < numberOfBytes; i++) {
+        char toWrite = 0;
+        toWrite |= IupacMask::characterToMask[read[i*2]].getMask();
+        toWrite |= IupacMask::characterToMask[read[i*2+1]].getMask() << 4;
+        out.write(&toWrite, 1);
+    }
+    if(size % 2 == 1) {
+        // write the last char
+        char toWrite = 0;
+        toWrite |= IupacMask::characterToMask[read[size-1]].getMask();
+        out.write(&toWrite, 1);
+    }
+
+    // write groupId
+    std::string groupId = getGroupID(read);
+    for(int i = 0; i < numberOfBytes; i++) {
+        char toWrite = 0;
+        toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
+        toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask() << 4;
+        out.write(&toWrite, 1);
+    }
+    if(size % 2 == 1) {
+        // write the last char
+        char toWrite = 0;
+        toWrite |= IupacMask::characterToMask[groupId[size-1]].getMask();
+        out.write(&toWrite, 1);
+    }
+}
+
+std::string Motif::getRepresentative(const std::string& read) {
     size_t i = 0;
     std::string rc = "";
     char rci = complement[read[read.length() - 1 - i]];
@@ -43,7 +86,7 @@ std::string Motif::getRepresentative(std::string read) {
         i++;
         rci = complement[read[read.length() - 1 - i]];
     }
-    if (read[i] < rci) {
+    if (i < read.length() && read[i] < rci) {
         return read;
     } else {
         // return rc!!
@@ -56,17 +99,16 @@ std::string Motif::getRepresentative(std::string read) {
     }
 }
 
-//BLSLinkedListNode<N>
-template<unsigned char N>
-float BLSLinkedListNode<N>::getScore(const std::bitset<N>& occurence) {
-    if(occurence.count() <= 1) return 0.0f;
+//BLSLinkedListNode
+float BLSLinkedListNode::getScore(const occurence_bits& occurence) {
+    if(__builtin_popcountll(occurence) <= 1) return 0.0f;
     // loop over next
     float score = 0.0f;
     int count = 0;
-    std::vector<BLSLinkedListNode<N> *> list;
-    BLSLinkedListNode<N> *iterator = this;
+    std::vector<BLSLinkedListNode *> list;
+    BLSLinkedListNode *iterator = this;
     while(iterator != NULL) {
-        if((occurence & iterator->mask).any()) {
+        if((occurence & iterator->mask) > 0) {
             count++;
             list.push_back(iterator);
             if(iterator->child == NULL) { // is a leaf add the score, independant of how many branches have occurence, since parent needs to be connected
@@ -111,16 +153,17 @@ float BLSLinkedListNode<N>::getScore(const std::bitset<N>& occurence) {
 void BLSScore::prepAllCombinations() {
     // precalculate all combinations of occurence
     for (int i = 0; i < pow(2, N_BITS); i++) {
-        std::bitset<N_BITS> occurence(i);
+        occurence_bits occurence(i);
         preparedBLS.push_back(calculateBLSScore(occurence));
-        // std::cerr << "prepping " << occurence << " => " << occurence.to_ulong() << " " << preparedBLS[i] << std::endl;
+        preparedBLSVector.push_back(calculateBLSVector(preparedBLS[i]));
+        // std::cerr << "prepping " << +occurence << " " << preparedBLS[i] << std::endl;
     }
 }
 
-void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode<N_BITS>* currentroot) {
+void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot) {
 
     // int startleafcount = leafcount;
-    BLSLinkedListNode<N_BITS>* currentnode = currentroot;
+    BLSLinkedListNode* currentnode = currentroot;
     bool endofbranch = false;
     // std::cout << "rec[" << recursion << "] starts at " << leafcount << std::endl;
     // std::cout << "rec[" << recursion << "] node: " << currentnode << std::endl;
@@ -131,18 +174,18 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
         } else if(newick[0] == '(') { // new branch
             // add new branch start;
             newick.erase(0,1);
-            BLSLinkedListNode<N_BITS>* child = currentnode->addChild(recursion + 1);
+            BLSLinkedListNode* child = currentnode->addChild(recursion + 1);
             recReadBranch(recursion + 1, leafcount, newick, child);
             // std::cout << "rec[" << recursion << "] received children " << std::endl << *child << std::endl;
-            BLSLinkedListNode<N_BITS>* iterator = child;
-            std::bitset<N_BITS> mask;
+            BLSLinkedListNode* iterator = child;
+            occurence_bits mask(0);
             while(iterator != NULL) {
-                // std::cout << "rec[" << recursion << "] child mask: " << iterator->getMask() << std::endl;
+                // std::cout << "rec[" << recursion << "] child mask: " << +iterator->getMask() << std::endl;
                 mask |= iterator->getMask();
                 iterator = iterator->getNext();
             }
             currentnode->setMask(mask);
-            // std::cout << "rec[" << recursion << "] read branch with mask " << mask << std::endl;
+            // std::cout << "rec[" << recursion << "] read branch with mask " << +mask << std::endl;
         } else if (newick[0] == ')') {
             newick.erase(0,1);
             endofbranch = true;
@@ -162,9 +205,9 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
             int doublepointposition = newick.find_first_of(':');
             std::string name = newick.substr(0, doublepointposition);
             newick.erase(0, doublepointposition);
-            std::bitset<N_BITS> mask;
-            mask.set(leafcount);
-            // std::cout << "rec[" << recursion << "] reading leaf " << name << " @ " << leafcount  << " " << mask << std::endl;
+            occurence_bits mask(0);
+            mask |= 1 << leafcount;
+            // std::cout << "rec[" << recursion << "] reading leaf " << name << " @ " << leafcount  << " " << +mask << std::endl;
             currentnode->setMask(mask);
             leafcount++;
 
@@ -174,15 +217,53 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
 }
 
 
-float BLSScore::calculateBLSScore(std::bitset<N_BITS> occurence) const {
+const std::vector<float> BLSScore::blsThresholds ({ 0.15, 0.5, 0.6, 0.7, 0.9, 0.95});
+
+float BLSScore::calculateBLSScore(const occurence_bits& occurence) const {
     return root->getChild()->getScore(occurence); // root has no next but only children! so first branch is of length 0 with 11111 so always true!
 }
-float BLSScore::getBLSScore(std::bitset<N_BITS> occurence) const {
-    return preparedBLS[occurence.to_ulong()];
+float BLSScore::getBLSScore(const occurence_bits& occurence) const {
+    return preparedBLS[occurence];
+}
+std::vector<int> BLSScore::calculateBLSVector(const float& bls) const {
+    std::vector<int> ret;
+    ret.push_back(1); // should have already past first check!
+    size_t i = 1;
+    while(i < blsThresholds.size() && bls > blsThresholds[i]) {
+        ret.push_back(1);
+        i++;
+    }
+    for(; i < blsThresholds.size(); i++) {
+        ret.push_back(0);
+    }
+    return ret;
+}
+const std::vector<int>* BLSScore::getBLSVector(const occurence_bits& occurence) const {
+    return &preparedBLSVector[occurence];
+}
+void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const {
+    // assume this is only 1 byte (max 8 thresholds), and first bit is first threshold and so on...
+    char size = preparedBLSVector[occurence].size();
+    // out.write(&size, 1);
+
+    //write Vector
+    char toWrite = 0;
+    for(int i = 0; i < 8 - size; i++) {
+        toWrite |= preparedBLSVector[occurence][i] << i;
+    }
+    out.write(&toWrite, 1);
+}
+char BLSScore::readBLSVectorInBinary(std::istream& in) const {
+    char readChar = 0;
+    in.read(&readChar, 1);
+}
+
+bool BLSScore::biggerThanMinThreshold(const float& bls) const {
+    return bls > blsThresholds[0];
 }
 
 // IUPACMASK
-const std::vector<char>* IupacMask::getCharacters() {
+const std::string* IupacMask::getCharacters() {
     return &characterLists[mask];
 }
 const std::vector<IupacMask> IupacMask::characterToMask ({
@@ -193,24 +274,24 @@ const std::vector<IupacMask> IupacMask::characterToMask ({
     IupacMask(), IupacMask(BASE_A), IupacMask(IUPAC_B), IupacMask(BASE_C), IupacMask(IUPAC_D), IupacMask(), IupacMask(), IupacMask(BASE_G), IupacMask(IUPAC_H), IupacMask(), IupacMask(), IupacMask(IUPAC_K), IupacMask(), IupacMask(IUPAC_M), IupacMask(IUPAC_N), IupacMask(), // 64
     IupacMask(), IupacMask(), IupacMask(IUPAC_R), IupacMask(IUPAC_S), IupacMask(BASE_T), IupacMask(), IupacMask(IUPAC_V), IupacMask(IUPAC_W), IupacMask(), IupacMask(IUPAC_Y) // 80
 });
-const std::vector<std::vector<char>> IupacMask::characterLists (
+const std::vector<std::string> IupacMask::characterLists (
 {
     {}, // 0!!
-    {'A'},
-    {'C'},
-    {'A', 'C'},
-    {'G'},
-    {'A', 'G'},
-    {'G', 'C'},
-    {'A', 'C', 'G'},
-    {'T'},
-    {'A', 'T'},
-    {'C', 'T'},
-    {'A', 'C', 'T'},
-    {'G', 'T'},
-    {'A', 'G', 'T'},
-    {'C', 'G', 'T'},
-    {'A', 'C', 'G', 'T'},
+    {"A"},
+    {"C"},
+    {"AC"},
+    {"G"},
+    {"AG"},
+    {"GC"},
+    {"ACG"},
+    {"T"},
+    {"AT"},
+    {"CT"},
+    {"ACT"},
+    {"GT"},
+    {"AGT"},
+    {"CGT"},
+    {"ACGT"},
 });
 const std::vector<char> IupacMask::representation ({ 0, 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'T', 'W', 'Y', 'H', 'K', 'D', 'B', 'N' });
 

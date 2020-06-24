@@ -5,12 +5,13 @@
 #include <vector>
 #include <stack>
 #include <iostream>
-#include <bitset>
 #include <random>
 #include <unordered_set>
+#include <bits/stdc++.h>
 
 
 #define N_BITS 4 // must be at least the maximum number of organisms
+typedef unsigned char occurence_bits; // define type here to easily expand number of bits in code!
 
 enum IUPAC {
     BASE_A =  0x1,
@@ -48,41 +49,43 @@ if only one branch is 0, cause it doesnt connect to others
 
 class Motif {
 private:
-    static const std::vector<unsigned char> complement;
+    static const std::vector<char> complement;
 
 public:
-    static std::string ReverseComplement(std::string read);
-    static bool isRepresentative(std::string);
-    static std::string getRepresentative(std::string);
+    static std::string getGroupID(const std::string& read);
+    static std::string ReverseComplement(const std::string& read);
+    static bool isRepresentative(const std::string& read);
+    static bool isGroupRepresentative(const std::string& read);
+    static std::string getRepresentative(const std::string& read);
+    static void writeGroupIDAndMotifInBinary(const std::string& read, std::ostream& out);
 };
 
-class MotifCollection {
-private:
-    std::unordered_set<std::string> processedMotifs; // average constant time adding + searching!
+// class MotifCollection {
+// private:
+//     std::unordered_set<std::string> processedMotifs; // average constant time adding + searching!
+//
+// public:
+//     bool checkAndAddElement(std::string motif) {
+//         if(processedMotifs.find(motif) == processedMotifs.end()) {
+//             processedMotifs.insert(motif);
+//             return true;
+//         } else {
+//             return false;
+//         }
+//     }
+//     size_t size() { return processedMotifs.size(); }
+// };
 
-public:
-    bool checkAndAddElement(std::string motif) {
-        if(processedMotifs.find(motif) == processedMotifs.end()) {
-            processedMotifs.insert(motif);
-            return false;
-        } else {
-            return true;
-        }
-    }
-    size_t size() { return processedMotifs.size(); }
-};
-
-template<unsigned char N>
 class BLSLinkedListNode {
 private:
     float length;
-    std::bitset<N> mask;
-    BLSLinkedListNode<N> *next;
-    BLSLinkedListNode<N> *child;
+    occurence_bits mask;
+    BLSLinkedListNode *next;
+    BLSLinkedListNode *child;
     int level;
     std::ostream& write(std::ostream& o) const{
         for(int i = 0; i < level; i++ ) { o << "  "; }
-        o << "[" << mask << "/" << length << "]"; // print this actual node
+        o << "[" << +mask << "/" << length << "]"; // print this actual node
         if(child != NULL) {
             o << std::endl;
             o << *child;
@@ -94,63 +97,80 @@ private:
         return o;
     }
 public:
-    BLSLinkedListNode<N>(): length(0), mask(0), next(NULL), child(NULL), level(0) {
-        mask.flip(); // root node (all 1!)
+    BLSLinkedListNode(): length(0), mask(0), next(NULL), child(NULL), level(0) {
+      for (int i = 0; i < N_BITS; i++) {
+        mask |= 1 << i; // so the last bits arent set to 1 for later in popcount etc!;
+      }
+      // std::cerr << "root node mask: " << +mask << std::endl; // +mask print the actual number not the char!
     }
-    BLSLinkedListNode<N>(int level_): length(0), mask(0), next(NULL), child(NULL), level(level_) {}
-    ~BLSLinkedListNode<N>() {
-        if (child != NULL) { delete child; }
-        if (next != NULL) { delete next; }
-    }
-    BLSLinkedListNode<N>(float length_, std::bitset<N> mask_, int level_): length(length_), mask(mask_), next(NULL), child(NULL), level(level_) {}
+    BLSLinkedListNode(int level_): length(0), mask(0), next(NULL), child(NULL), level(level_) {}
+    BLSLinkedListNode(float length_, occurence_bits mask_, int level_): length(length_), mask(mask_), next(NULL), child(NULL), level(level_) {}
     void setLevel(int level_) { level = level_; }
-    BLSLinkedListNode<N> *addNext(int level_) { next = new BLSLinkedListNode<N>(level_); return next;}
-    BLSLinkedListNode<N> *addChild(int level_) { child = new BLSLinkedListNode<N>(level_); return child; }
-    void setMask(std::bitset<N> mask_) {mask = mask_;}
+    BLSLinkedListNode *addNext(int level_) { next = new BLSLinkedListNode(level_); return next;}
+    BLSLinkedListNode *addChild(int level_) { child = new BLSLinkedListNode(level_); return child; }
+    void setMask(occurence_bits mask_) {mask = mask_;}
     void setLength(float length_) {length = length_;}
 
-    BLSLinkedListNode<N> *getChild() { return child; }
-    BLSLinkedListNode<N> *getNext() { return next; }
-    std::bitset<N> getMask() {return mask; }
+    BLSLinkedListNode *getChild() { return child; }
+    BLSLinkedListNode *getNext() { return next; }
+    occurence_bits getMask() {return mask; }
 
-    friend std::ostream& operator<< (std::ostream& o, const BLSLinkedListNode<N>& b) {
+    friend std::ostream& operator<< (std::ostream& o, const BLSLinkedListNode& b) {
         return b.write(o);
     }
 
-    float getScore(const std::bitset<N>& occurence);
+    float getScore(const occurence_bits& occurence);
 };
 
 class BLSScore {
 private:
-    BLSLinkedListNode<N_BITS>* root;
+    static const std::vector<float> blsThresholds; // TODO this should be set in constructor or something
+    BLSLinkedListNode* root;
     std::vector<float> preparedBLS;
+    std::vector<std::vector<int> > preparedBLSVector;
 
-    float calculateBLSScore(std::bitset<N_BITS> occurence) const;
-    void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode<N_BITS>* currentroot);
+    float calculateBLSScore(const occurence_bits& occurence) const;
+    std::vector<int> calculateBLSVector(const float& bls) const;
+    void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot);
     void prepAllCombinations();
 
 public:
     // example: ((BD1G15520:0.2688, OS03G38520:0.2688):0.0538, (SB01G015780:0.086, (ZM01G45380:1.0E-6,ZM05G08300:1.0E-6):0.086):0.2366);
     BLSScore(std::string newick) {
-        root = new BLSLinkedListNode<N_BITS>();
+        root = new BLSLinkedListNode();
         int leafnr = 0;
         recReadBranch(0, leafnr, newick, root);
         prepAllCombinations();
     }
     ~BLSScore() {
-        delete root;
+        // Depth-first traversal of the tree
+        std::stack<BLSLinkedListNode *> stack;
+        stack.push(root);
+
+        while (!stack.empty()) {
+                BLSLinkedListNode* node = stack.top();
+                stack.pop();
+                if(node->getChild() != NULL) stack.push(node->getChild());
+                if(node->getNext() != NULL) stack.push(node->getNext());
+
+                delete node;
+        }
     }
     friend std::ostream& operator<< (std::ostream& o, const BLSScore& bls) {
         o << *bls.root << std::endl;
         return o;
     }
-    float getBLSScore(std::bitset<N_BITS> occurence) const;
+    float getBLSScore(const occurence_bits& occurence) const;
+    const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
+    void writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const;
+    char readBLSVectorInBinary(std::istream& in) const;
+    bool biggerThanMinThreshold(const float& bls) const;
 };
 
 class IupacMask {
 private:
     unsigned char mask;
-    static const std::vector<std::vector<char>> characterLists;
+    static const std::vector<std::string> characterLists;
     static const std::vector<char> representation;
 
 public:
@@ -158,13 +178,13 @@ public:
     IupacMask() : mask(0) {}
     IupacMask(const IUPAC mask_ ) : mask(mask_) {}
 
-    unsigned char getMask() { return mask; }
+    unsigned char getMask() const { return mask; }
 
     bool isDegenerate() {
         return __builtin_popcountll(mask) > 1; // relies on the gcc builtin popcount
     }
 
-    const std::vector<char>* getCharacters();
+    const std::string* getCharacters();
 
     char getRepresentation() const;
 

@@ -26,7 +26,6 @@
 #include <vector>
 #include <unordered_set>
 #include <cassert>
-#include <bits/stdc++.h>
 #include "motif.h"
 
 // ============================================================================
@@ -66,7 +65,7 @@ private:
         STNode* suffixLink;             // points to suffix link node
         length_t depth;                 // depth of current node
         length_t suffixIdx;             // suffix index (only for leaf nodes)
-        std::bitset<N_BITS> occurence;
+        occurence_bits occurence;
 
 public:
         /**
@@ -89,15 +88,15 @@ public:
          * @return occurenceBit is the number of the current string this suffix belongs to
          */
         void setOccurenceBitForGST(unsigned char occurenceBit, int reverseComplementFactor) { // used in leaf
-            occurence.set(occurenceBit / reverseComplementFactor); // /2 to take into account Reverse complement!
-            if(parent != NULL && !parent->occurence.test(occurenceBit / reverseComplementFactor)) { // if parent and parent hasnt got this occurence set it!
+            occurence |= 1 << (occurenceBit / reverseComplementFactor); // divide by 2 to take into account Reverse complement!
+            if(parent != NULL && !(parent->occurence &  (1 << (occurenceBit / reverseComplementFactor)) ) ) { // if parent and parent hasnt got this occurence set it!
               parent->setOccurenceBitForGST(occurenceBit, reverseComplementFactor);
             }
         }
-        void setOccurence(std::bitset<N_BITS> occurence_) {
+        void setOccurence(occurence_bits occurence_) {
             occurence = occurence_;
         }
-        std::bitset<N_BITS> getOccurence() {
+        occurence_bits getOccurence() {
           return occurence;
         }
 
@@ -256,8 +255,18 @@ public:
         STPosition(STNode* node, length_t offset) : node(node), offset(offset) {
                 assert(offset <= node->getEdgeLength());
         }
+        void set(STNode* node_)  {
+                node = node_;
+                offset = node->getEdgeLength();
+                assert(offset <= node->getEdgeLength());
+        }
+        void set(STNode* node_, length_t offset_)  {
+                node = node_;
+                offset = offset_;
+                assert(offset <= node->getEdgeLength());
+        }
 
-        std::bitset<N_BITS> getOccurence() {
+        occurence_bits getOccurence() {
           return node->getOccurence();
         }
         /**
@@ -305,10 +314,42 @@ public:
         friend class SuffixTree;
 };
 
-struct STPositionHash {
-   size_t operator() (const STPosition &pos) const {
-     return pos.getPositionInText();
-   }
+// per character you add a list of positions
+struct STPositionVector {
+public:
+  std::vector<STPosition> list;
+  size_t validPositions;
+  STPositionVector(int maxDenegeracy): validPositions(0) {
+    list.reserve(pow(4, maxDenegeracy)); // max number of positions is 4^maxDegen, ACGT = 4 on maxDegen positions!
+  }
+  void reset() {validPositions = 0;}
+  void addSTPosition(STNode* node, length_t offset) {
+    list[validPositions].set(node, offset);
+    validPositions++;
+  }
+  void addSTPosition(STNode* node) {
+    list[validPositions].set(node);
+    validPositions++;
+  }
+  bool empty() {
+    return validPositions == 0;
+  }
+};
+
+// the list for every character
+struct STPositionsPerLetter {
+public:
+  std::vector<STPositionVector> list; // PUBLIC SO IT ISNT COPIED ALL THE TIME!
+  STPositionsPerLetter(int motifSizeUpperBound, int maxDenegeracy) {
+    for(int i= 0; i < motifSizeUpperBound; i++) { // one more for last iteration!
+      list.push_back(STPositionVector(maxDenegeracy));
+    }
+  }
+  void reset() {
+    for(size_t i= 0; i < list.size(); i++) {
+      list[i].reset();
+    }
+  }
 };
 
 // ============================================================================
@@ -462,18 +503,12 @@ private:
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
-          const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold,
-          const std::unordered_set<STPosition, STPositionHash>& positions,
-          const std::string& currentMotif, const float blsScore,
-          int curDegenerateLetters, MotifCollection& processed, std::ostream& out) const;
+          const int& maxDegenerateLetters, const BLSScore& bls,
+          STPositionsPerLetter& positions, const std::string& prefix,
+          int curDegenerateLetters, std::ostream& out) const;
 
-        void advanceIupacCharacter(IupacMask mask, const std::unordered_set<STPosition, STPositionHash>& currentPositions,
-                             std::unordered_set<STPosition, STPositionHash>& newPositions, std::bitset<N_BITS>& occurence) const;
+        void advanceIupacCharacter(IupacMask mask, int characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
 
-        static std::string printSortedString(std::string &str)  {
-          std::sort(str.begin(), str.end());
-          return str;
-        }
 
 public:
         /**
@@ -494,7 +529,7 @@ public:
          * @param occ Start positions of the occurrences in T (output)
          */
         void matchPattern(const std::string& P, std::vector<size_t>& occ);
-        void matchIupacPattern(const std::string& P, std::unordered_set<STPosition, STPositionHash>& positions, std::bitset<N_BITS>& occurence);
+        std::vector<STPosition> matchIupacPattern(const std::string& P, int maxDegenerateLetters, occurence_bits& occurence);
         void matchPattern(const std::string& P, BLSScore& bls);
 
 
@@ -522,8 +557,7 @@ public:
         * @Param l Length of motifs to find
         * @Param motifs STPositions of different motifs in T (output)
         */
-        // TODO add max number of degenration and what type (enumeration)
-        void printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, std::ostream& out);
+        void printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
 
 };
 

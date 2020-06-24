@@ -20,6 +20,7 @@
 #include <iostream>
 #include <cassert>
 #include <stack>
+#include <list>
 #include "suffixtree.h"
 #include "motif.h"
 
@@ -370,7 +371,6 @@ void SuffixTree::constructUkonen()
                 for (size_t i = numLeaves; i < j; i++) {
                         // std::cout << "current i " << i << " is at " << T[i] << std::endl;
                         // note that pos will always point to T[i:j-1[ at this point
-                        // TODO add gst occurency table
                         // if t[i] == # then set bit of currentbit + increment currentbit
                         // add bit to existing nodes
 
@@ -394,13 +394,13 @@ void SuffixTree::constructUkonen()
 
                         // rule 2 : create internal node (optionally) and leaf
                         if (!pos.atNode()) {
-                                pos = splitEdge(pos); // pos points to new node // TODO add currentbit variable
+                                pos = splitEdge(pos); // pos points to new node
                                 if (prevInternal != NULL)
                                         prevInternal->setSuffixLink(pos.node);
                                 prevInternal = pos.node;
                         }
 
-                        addLeaf(pos, i, currentbit); // TODO add currentbit variable
+                        addLeaf(pos, i, currentbit);
                         if(T[numLeaves] == '#') {
                             // std::cout << "incrementing currentleafbit at " << T[numLeaves] << std::endl;
                             currentleafbit++;
@@ -429,80 +429,90 @@ To check validity of the motif with regard to the BLS score, we do the or operat
 If score is equal to or more than the threshold then we keep the motif if its less we should stop the recursion!
 */
 void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
-    const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, const std::unordered_set<STPosition, STPositionHash>& positions,
-    const std::string& currentMotif, const float blsScore,  int curDegenerateLetters, MotifCollection& processed, std::ostream& out) const
+    const int& maxDegenerateLetters, const BLSScore& bls, STPositionsPerLetter& positions,
+    const std::string& prefix, int curDegenerateLetters, std::ostream& out) const
 {
-    // std::cerr << "currentMotif [" << currentMotif;
-    // std::cerr << "currentMotif [" <<currentMotif << "\t" << blsScore << "]" << std::endl;
-    if((unsigned char) currentMotif.length() >= l.first) {
-        std::string representation = Motif::getRepresentative(currentMotif);
-        if(processed.checkAndAddElement(representation)) {
-            out << representation << "\t" << std::endl;
-        }
-    } // currentMotif is part of the printable
-    // return if length is l.second - 1, since we cannot extend anymore then
-    if((unsigned char) currentMotif.length() == l.second - 1) { return; }
-    // std::cerr << " can be extended" << std::endl;
-    // extend with possible characters in alphabet
-
-    std::unordered_set<STPosition, STPositionHash> newpositions;
     int degenerateCount;
-    std::bitset<N_BITS> occurence(0);
+    occurence_bits occurence(0);
     const std::vector<IupacMask>* curalphabet = (curDegenerateLetters == maxDegenerateLetters) ?  &exactAlphabet : this->alphabet;
+
+    // std::cerr << "extending: " << prefix << std::endl;
     for (IupacMask extension : *curalphabet) {
-        // std::cerr << currentMotif << " + " << extension << std::endl;
         // increment position in positions list if possible
         degenerateCount = extension.isDegenerate() ? curDegenerateLetters + 1 : curDegenerateLetters;
         // if(degenerateCount > maxDegenerateLetters) { continue; } // cannot extend this degenerate character
 
-        advanceIupacCharacter(extension, positions, newpositions, occurence);
+        advanceIupacCharacter(extension, prefix.size(), positions, occurence);
 
         // can be extended if at least one new position is found!
-        if(newpositions.size() > 0) {
-            // std::cout << currentMotif << " -> " << extension << " has " << newpositions.size() << " paths : ";
-            // for (auto tmpp : newpositions) { std::cout << " at " << tmpp.node->begin() << " + " << tmpp.offset << " - ";}
-            // std::cout << std::endl;
-            float childBlsScore = bls.getBLSScore(occurence);
-            // std::cerr << "occ " << occurence << " for " << (currentMotif + extension.getRepresentation()) << " gives a bls score of " << childBlsScore << std::endl;
-            if(childBlsScore >= blsThreshold) {
-                recPrintMotifs(l, maxDegenerateLetters, bls, blsThreshold,
-                               newpositions, currentMotif + extension.getRepresentation(), childBlsScore,
-                               degenerateCount, processed, out);
+        if(positions.list[prefix.size() + 1].validPositions > 0) {
+            std::string currentMotif = prefix + extension.getRepresentation();
+            float blsScore = bls.getBLSScore(occurence);
+            // std::cerr << "nodes that match " << currentMotif << ": "<< positions.list[prefix.size() + 1].validPositions  << " with occ " << +occurence << " and blsScore: " << blsScore << std::endl;
+            if(bls.biggerThanMinThreshold(blsScore)) {
+                if((unsigned char) currentMotif.length() >= l.first) { // print motif if correct length!
+                    // std::cerr << "currentMotif '" << currentMotif << "' has valid blsScore + is within required motif length" << std::endl;
+
+                    // std::string groupId = Motif::getGroupID(currentMotif);
+                    // if(Motif::isGroupRepresentative(groupId)) {
+                    if(Motif::isRepresentative(currentMotif)) {
+                        // STRING DATA
+                        // const std::vector<int>* blsVector = bls.getBLSVector(occurence);
+                        // out << Motif::getGroupID(currentMotif) << "\t" << currentMotif << "\t" << (*blsVector)[0];
+                        // for (size_t i = 1; i < blsVector->size(); i++) {
+                        //     out << "," << (*blsVector)[i];
+                        // }
+                        // out << '\n'; // std::endl has a flushline which destroys performance.
+
+                        //BINARY DATA
+                        Motif::writeGroupIDAndMotifInBinary(currentMotif, out);
+                        bls.writeBLSVectorInBinary(occurence, out);
+                    }
+                }
+                // std::cout << currentMotif << " -> " << extension << " has " << newpositions.size() << " paths : ";
+                // for (auto tmpp : newpositions) { std::cout << " at " << tmpp.node->begin() << " + " << tmpp.offset << " - ";}
+                // std::cout << std::endl;
+                if((unsigned char) currentMotif.length() +  1 == l.second) { // max length reached, we do not recurse into the next extension
+                    continue; // continue for loop/go to next extension
+                } else { // recursive function to add one more letter to the motifs
+                    recPrintMotifs(l, maxDegenerateLetters, bls,
+                                   positions, currentMotif,
+                                   degenerateCount, out);
+               }
             }
         }
     }
-    newpositions.clear();
 }
 
-void SuffixTree::advanceIupacCharacter(IupacMask mask, const std::unordered_set<STPosition, STPositionHash>& currentPositions,
-             std::unordered_set<STPosition, STPositionHash>& newPositions, std::bitset<N_BITS>& occurence) const {
-
-
-    // std::cerr << "adding " << mask.getRepresentation() << std::endl;
-    const std::vector<char> *chars = mask.getCharacters(); // chars is cleared in this function
-    occurence.reset();
-    newPositions.clear();
-    for(STPosition p : currentPositions) {
+void SuffixTree::advanceIupacCharacter(IupacMask mask, int characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const {
+    // std::cerr << "adding " << mask.getRepresentation()  << " @ " << characterPos << std::endl;
+    const std::string* chars = mask.getCharacters();
+    occurence = 0; // reset!
+    positions.list[characterPos + 1].reset();
+    // std::cerr << "reset next letter list: " << positions.list[characterPos + 1].validPositions << std::endl;
+    // std::cerr << "current positions list: " << positions.list[characterPos].validPositions << std::endl;
+    for(size_t i = 0; i < positions.list[characterPos].validPositions; i++) {
+    // for(STPosition p : currentPositions) {
         for(char c : *chars) { // these are the chars that belong to the iupac character extension!!
-            if (p.atNode()) {
+            if (positions.list[characterPos].list[i].atNode()) {
                 // if p extended the full branch then go to child node with char c
-                STNode *child = p.node->getChild(c);
+                STNode *child = positions.list[characterPos].list[i].node->getChild(c);
                 if(child != NULL) {
-                    newPositions.insert(STPosition(child, 1));
-                    occurence = occurence | child->getOccurence();
-                    // std::cerr << "update occ " << occurence << std::endl;
+                    positions.list[characterPos + 1].addSTPosition(child, 1);
+                    occurence |= child->getOccurence();
+                    // std::cerr << "occ update " << +child->getOccurence() << " -> " << +occurence << std::endl;
                 }
             } else {
                 // case b) we are at an edge: try and match next character along edge
-                if (T[p.node->begin() + p.offset] == c) {
-                    // std::cerr << currentMotif << " extension to child " << c << " at " << p.node->begin() << " + " << p.offset<< std::endl;
-                    occurence = occurence | p.node->getOccurence();
-                    // std::cerr << "update occ " << occurence << std::endl;
-                    newPositions.insert(STPosition(p.node, p.offset + 1));
+                if (T[positions.list[characterPos].list[i].node->begin() + positions.list[characterPos].list[i].offset] == c) {
+                    positions.list[characterPos + 1].addSTPosition(positions.list[characterPos].list[i].node, positions.list[characterPos].list[i].offset + 1);
+                    occurence |= positions.list[characterPos].list[i].node->getOccurence();
+                    // std::cerr << "occ update " << +positions.list[characterPos].list[i].node->getOccurence() << " -> " << +occurence << std::endl;
                 }
             }
         }
     }
+    // std::cerr << "next letter list: " << positions.list[characterPos + 1].validPositions << std::endl;
 }
 
 
@@ -574,7 +584,7 @@ SuffixTree::~SuffixTree()
         }
 }
 
-void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, const float& blsThreshold, std::ostream& out)
+void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out)
 {
         if(alphabet == EXACT) {
             assert(maxDegenerateLetters == 0); // cannot have degenerate letters with exact alphabet
@@ -586,23 +596,20 @@ void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet al
         else
             this->alphabet = &(this->exactTwofoldAndNAlphabet);
 
-        MotifCollection processed;
+        STPositionsPerLetter positions(l.second, maxDegenerateLetters);
 
-        // std::string iupacword = "AAACMAKMTTT";
-        // std::bitset<N_BITS> occurence(0);
-        // std::unordered_set<STPosition, STPositionHash> positions;
-        // matchIupacPattern(iupacword, positions, occurence);
-        // if(!positions.empty()) {
-        //     std::cerr << iupacword << " found with occurence " << occurence << " at " << positions.size() << " locations" << std::endl;
-        //     for(auto p : positions) {
-        //         std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
-        //     }
+// start from iupacword
+        // std::string iupacword = "TNAGC";
+        // occurence_bits occurence(0);
+        // std::vector<STPosition> startPositions = matchIupacPattern(iupacword, 3, occurence);
+        // for(auto p : startPositions) {
+            // std::cerr << "pos: " << p.getPositionInText() << ": " <<  T.substr(p.getPositionInText() - p.getDepth(), iupacword.length()) << std::endl;
+            // positions.list[iupacword.length()].addSTPosition(p.node, p.offset);
         // }
-        // recPrintMotifs(l, maxDegenerateLetters, bls, blsThreshold, positions, iupacword, bls.getBLSScore(occurence), 3, processed, out);
-        // std::cerr << "--------------------------" << std::endl;
-        std::unordered_set<STPosition, STPositionHash> positions{STPosition(root)};
-        recPrintMotifs(l, maxDegenerateLetters, bls, blsThreshold, positions, "", 1.0, 0, processed, out);
-        std::cerr << "processed " << processed.size() << " motifs" << std::endl;
+        // recPrintMotifs(l, maxDegenerateLetters, bls, positions, iupacword, 1, out);
+// start from root
+        positions.list[0].addSTPosition(root);
+        recPrintMotifs(l, maxDegenerateLetters, bls, positions, "", 0, out);
 }
 
 
@@ -620,21 +627,27 @@ void SuffixTree::matchPattern(const string& P, vector<size_t>& occ)
         getOccurrences(pos.node, occ);
 }
 
-void SuffixTree::matchIupacPattern(const string& P, std::unordered_set<STPosition, STPositionHash>& positions, std::bitset<N_BITS>& occurence)
+std::vector<STPosition> SuffixTree::matchIupacPattern(const string& P, int maxDegenerateLetters, occurence_bits& occurence)
 {
-        // can we completely match P?
-        std::unordered_set<STPosition, STPositionHash> currentPositions{STPosition(root)};
         size_t i =0;
 
-        while (!currentPositions.empty() && i < P.size()) {
-            advanceIupacCharacter(IupacMask::characterToMask[P[i]], currentPositions, positions, occurence);
-            currentPositions = positions;
-            // std::cerr << "matching " << P[i] << " has " << currentPositions.size() << " locations and occurence " << occurence << std::endl;
-            // for(auto p : positions) {
-            //     std::cerr << "pos: " << p.getPositionInText() << ": " << T.substr(p.getPositionInText() - p.getDepth(), i + 1) << std::endl;
+        STPositionsPerLetter positions(P.size() + 1, maxDegenerateLetters);
+        positions.list[0].addSTPosition(root);
+        while (!positions.list[i].empty() && i < P.size()) {
+            // std::cerr << "valid pos: " << positions.list[i].validPositions << std::endl;
+            advanceIupacCharacter(IupacMask::characterToMask[P[i]], i, positions, occurence);
+            // std::cerr << "matching " << P[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
+            // for(int j = 0; j < positions.list[i+1].validPositions; j++) {
+                // std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
+                // T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
             // }
             i++;
         }
+        std::vector<STPosition> pos;
+        for(size_t i = 0; i < positions.list[P.size()].validPositions; i++) {
+            pos.push_back(positions.list[P.size()].list[i]);
+        }
+        return pos;
 }
 
 
@@ -645,7 +658,6 @@ void SuffixTree::matchPattern(const string& P, BLSScore& bls)
         STPosition pos(root);
         if (!advancePos(pos, P, 0, P.size()))
                 return;
-
 
         std::cerr << "Found occurrence @ " << pos.getPositionInText()
                   << " with occurence vector " << pos.getOccurence()
