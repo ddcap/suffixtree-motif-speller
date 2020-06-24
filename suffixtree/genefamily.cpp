@@ -50,8 +50,8 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs) {
     startChrono();
     BLSScore bls(newick);
     SuffixTree ST(T, true);
-    ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
+    int count = ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
     double elapsed = stopChrono();
-    std::cerr << "[" << name << "] finished in " << elapsed << "s" << std::endl;
+    std::cerr << "[" << name << "] counted " << count << " motifs in " << elapsed << "s" << std::endl;
   }
 }

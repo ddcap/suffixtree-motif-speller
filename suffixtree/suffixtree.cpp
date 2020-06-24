@@ -430,7 +430,7 @@ If score is equal to or more than the threshold then we keep the motif if its le
 */
 void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
     const int& maxDegenerateLetters, const BLSScore& bls, STPositionsPerLetter& positions,
-    const std::string& prefix, int curDegenerateLetters, std::ostream& out) const
+    const std::string& prefix, int curDegenerateLetters, std::ostream& out)
 {
     int degenerateCount;
     occurence_bits occurence(0);
@@ -456,6 +456,7 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
                     // std::string groupId = Motif::getGroupID(currentMotif);
                     // if(Motif::isGroupRepresentative(groupId)) {
                     if(Motif::isRepresentative(currentMotif)) {
+                        motifCount++;
                         // STRING DATA
                         // const std::vector<int>* blsVector = bls.getBLSVector(occurence);
                         // out << Motif::getGroupID(currentMotif) << "\t" << currentMotif << "\t" << (*blsVector)[0];
@@ -584,7 +585,7 @@ SuffixTree::~SuffixTree()
         }
 }
 
-void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out)
+int SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out)
 {
         if(alphabet == EXACT) {
             assert(maxDegenerateLetters == 0); // cannot have degenerate letters with exact alphabet
@@ -608,8 +609,10 @@ void SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet al
         // }
         // recPrintMotifs(l, maxDegenerateLetters, bls, positions, iupacword, 1, out);
 // start from root
+        motifCount = 0;
         positions.list[0].addSTPosition(root);
         recPrintMotifs(l, maxDegenerateLetters, bls, positions, "", 0, out);
+        return motifCount;
 }
 
 

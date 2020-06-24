@@ -500,12 +500,13 @@ private:
         static const std::vector<IupacMask> exactTwofoldAndNAlphabet;
         const std::vector<IupacMask> *alphabet;
         int reverseComplementFactor = 1;
+        int motifCount;
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
           const int& maxDegenerateLetters, const BLSScore& bls,
           STPositionsPerLetter& positions, const std::string& prefix,
-          int curDegenerateLetters, std::ostream& out) const;
+          int curDegenerateLetters, std::ostream& out);
 
         void advanceIupacCharacter(IupacMask mask, int characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
 
@@ -557,7 +558,7 @@ public:
         * @Param l Length of motifs to find
         * @Param motifs STPositions of different motifs in T (output)
         */
-        void printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
+        int printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
 
 };
 
