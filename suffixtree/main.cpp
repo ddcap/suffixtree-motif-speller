@@ -46,34 +46,10 @@ void readInput(const string& filename, string& T)
 
 int main(int argc, char* argv[])
 {
-        if (argc != 2)
-            throw runtime_error("Program requires an input text as an argument");
-
-        GeneFamily::readOrthologousFamily(argv[1]);
-
-        // while (true) {
-        //         cout << "Type a word: ";
-        //         string word;
-        //         cin >> word;
-        //
-        //         vector<size_t> occ;
-        //         ST.matchPattern(word, occ);
-        //         cout << "Found " << occ.size() << " occurrences." << endl;
-        //         for (auto pos : occ) {
-        //                 size_t begin = pos;
-        //                 while (begin > 0 && T[begin-1] != '#')
-        //                         begin--;
-        //
-        //                 size_t end = pos;
-        //                 while (end+1 < T.size() && T[end+1] != '#')
-        //                         end++;
-        //
-        //                 cout << "* " << T.substr(begin, end-begin+1) << endl;
-        //         }
-        //
-        // }
-        //
-        // cout << "Bye..." << endl;
-
+        if (argc == 2) {
+            GeneFamily::readOrthologousFamily(argv[1]);
+        } else {
+            GeneFamily::readOrthologousFamily(std::cin);
+        }
         return EXIT_SUCCESS;
 }

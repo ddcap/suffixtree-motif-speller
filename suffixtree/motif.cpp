@@ -256,6 +256,7 @@ void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostr
 char BLSScore::readBLSVectorInBinary(std::istream& in) const {
     char readChar = 0;
     in.read(&readChar, 1);
+    return readChar;
 }
 
 bool BLSScore::biggerThanMinThreshold(const float& bls) const {

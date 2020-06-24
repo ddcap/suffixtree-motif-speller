@@ -15,7 +15,7 @@ private:
 public:
   static void readOrthologousFamily(const std::string& filename);
 
-  static void readOrthologousFamily(std::ifstream& ifs) ;
+  static void readOrthologousFamily(std::istream& ifs) ;
 };
 
 #endif
