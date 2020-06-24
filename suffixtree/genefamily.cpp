@@ -23,12 +23,12 @@ void GeneFamily::readOrthologousFamily(const std::string& filename) {
 }
 
 void GeneFamily::readOrthologousFamily(std::istream& ifs) {
-  std::string T, newick, line, name;
-  int N;
   std::pair<short, short> l(6, 13);
   int maxDegeneration = 3;
   while (ifs) {
     // READ DATA
+    std::string T, newick, line, name;
+    int N;
     getline(ifs, line);
     if(line.empty()) {continue;}
     name = line;
@@ -45,12 +45,13 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs) {
         T.append(Motif::ReverseComplement(line));
     }
     T.push_back('$');
+    std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
     BLSScore bls(newick);
     SuffixTree ST(T, true);
     ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
     double elapsed = stopChrono();
-    std::cerr << "time for iterating motifs: " << elapsed << std::endl;
+    std::cerr << "[" << name << "] finished in " << elapsed << "s" << std::endl;
   }
 }
