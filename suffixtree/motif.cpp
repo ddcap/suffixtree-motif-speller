@@ -7,7 +7,7 @@
 const std::vector<char> Motif::complement ({
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, // 32 // this is for the alignment based RC, replace '-' with '-'
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 48
     0, 'T', 'V', 'G', 'H', 0, 0, 'C', 'D', 0, 0, 'M', 0, 'K', 'N', 0, // 64
     0, 0, 'Y', 'S', 'A', 0, 'B', 'W', 0, 'R' // 80
@@ -41,8 +41,12 @@ bool Motif::isGroupRepresentative(const std::string& read) {
     return read <= rc;
 }
 
-void Motif::writeGroupIDAndMotifInBinary(const std::string& read, std::ostream& out) {
-    char size = read.length(); // assumes length isnt more than 255 chars
+void Motif::writeGroupIDAndMotif(const std::string& motif, std::ostream& out) {
+    out << getGroupID(motif) << "\t" << motif;
+}
+
+void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out) {
+    char size = motif.length(); // assumes length isnt more than 255 chars
     // write size
     out.write(&size, 1);
     char numberOfBytes = size / 2;
@@ -50,19 +54,19 @@ void Motif::writeGroupIDAndMotifInBinary(const std::string& read, std::ostream& 
     //write Motif
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[read[i*2]].getMask();
-        toWrite |= IupacMask::characterToMask[read[i*2+1]].getMask() << 4;
+        toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+        toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
         out.write(&toWrite, 1);
     }
     if(size % 2 == 1) {
         // write the last char
         char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[read[size-1]].getMask();
+        toWrite |= IupacMask::characterToMask[motif[size-1]].getMask();
         out.write(&toWrite, 1);
     }
 
     // write groupId
-    std::string groupId = getGroupID(read);
+    std::string groupId = getGroupID(motif);
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
         toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
@@ -241,6 +245,14 @@ std::vector<int> BLSScore::calculateBLSVector(const float& bls) const {
 const std::vector<int>* BLSScore::getBLSVector(const occurence_bits& occurence) const {
     return &preparedBLSVector[occurence];
 }
+
+void BLSScore::writeBLSVector(const occurence_bits& occurence, std::ostream& out) const {
+    //write Vector
+    out << preparedBLSVector[occurence][0];
+    for (size_t i = 1; i < preparedBLSVector[occurence].size(); i++) {
+        out << "," << preparedBLSVector[occurence][i];
+    }
+}
 void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const {
     // assume this is only 1 byte (max 8 thresholds), and first bit is first threshold and so on...
     char size = preparedBLSVector[occurence].size();
@@ -259,12 +271,12 @@ char BLSScore::readBLSVectorInBinary(std::istream& in) const {
     return readChar;
 }
 
-bool BLSScore::biggerThanMinThreshold(const float& bls) const {
-    return bls > blsThresholds[0];
+bool BLSScore::greaterThanMinThreshold(const occurence_bits& occurence) const {
+    return preparedBLS[occurence] > blsThresholds[0];
 }
 
 // IUPACMASK
-const std::string* IupacMask::getCharacters() {
+const std::string* IupacMask::getCharacters() const {
     return &characterLists[mask];
 }
 const std::vector<IupacMask> IupacMask::characterToMask ({

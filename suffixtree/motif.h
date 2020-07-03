@@ -57,7 +57,8 @@ public:
     static bool isRepresentative(const std::string& read);
     static bool isGroupRepresentative(const std::string& read);
     static std::string getRepresentative(const std::string& read);
-    static void writeGroupIDAndMotifInBinary(const std::string& read, std::ostream& out);
+    static void writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out);
+    static void writeGroupIDAndMotif(const std::string& motif, std::ostream& out);
 };
 
 // class MotifCollection {
@@ -111,9 +112,9 @@ public:
     void setMask(occurence_bits mask_) {mask = mask_;}
     void setLength(float length_) {length = length_;}
 
-    BLSLinkedListNode *getChild() { return child; }
-    BLSLinkedListNode *getNext() { return next; }
-    occurence_bits getMask() {return mask; }
+    BLSLinkedListNode *getChild() const { return child; }
+    BLSLinkedListNode *getNext() const { return next; }
+    occurence_bits getMask() const {return mask; }
 
     friend std::ostream& operator<< (std::ostream& o, const BLSLinkedListNode& b) {
         return b.write(o);
@@ -163,8 +164,9 @@ public:
     float getBLSScore(const occurence_bits& occurence) const;
     const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
     void writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const;
+    void writeBLSVector(const occurence_bits& occurence, std::ostream& out) const;
     char readBLSVectorInBinary(std::istream& in) const;
-    bool biggerThanMinThreshold(const float& bls) const;
+    bool greaterThanMinThreshold(const occurence_bits& occurence) const;
 };
 
 class IupacMask {
@@ -184,7 +186,7 @@ public:
         return __builtin_popcountll(mask) > 1; // relies on the gcc builtin popcount
     }
 
-    const std::string* getCharacters();
+    const std::string* getCharacters() const;
 
     char getRepresentation() const;
 

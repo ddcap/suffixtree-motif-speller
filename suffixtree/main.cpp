@@ -46,10 +46,19 @@ void readInput(const string& filename, string& T)
 
 int main(int argc, char* argv[])
 {
-        if (argc == 2) {
-            GeneFamily::readOrthologousFamily(argv[1]);
+        std::pair<short, short> l(6, 13);
+        int maxDegeneration = 3;
+        if (argc >= 2) {
+            if (argc >= 3 ) {
+                maxDegeneration = std::stoi(argv[2]);
+                if (argc >= 5) {
+                    l.first = std::stoi(argv[3]);
+                    l.second =std::stoi(argv[4]);
+                }
+            }
+            GeneFamily::readOrthologousFamily(argv[1], l, maxDegeneration);
         } else {
-            GeneFamily::readOrthologousFamily(std::cin);
+            GeneFamily::readOrthologousFamily(std::cin, l, maxDegeneration);
         }
         return EXIT_SUCCESS;
 }

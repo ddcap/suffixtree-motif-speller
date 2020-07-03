@@ -501,15 +501,25 @@ private:
         const std::vector<IupacMask> *alphabet;
         int reverseComplementFactor = 1;
         int motifCount;
+        std::vector<size_t> stringStartPositions; // indicates where new strings start
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
           const int& maxDegenerateLetters, const BLSScore& bls,
           STPositionsPerLetter& positions, const std::string& prefix,
           int curDegenerateLetters, std::ostream& out);
+        // this next one also returns all positions the current Motif matches
+        void recPrintMotifsWithPositions(const std::pair<short, short>& l,
+          const int& maxDegenerateLetters, const BLSScore& bls,
+          STPositionsPerLetter& positions, std::vector<std::pair<int, int>>& stringPositions, const std::string& prefix,
+          int curDegenerateLetters, std::ostream& out);
 
-        void advanceIupacCharacter(IupacMask mask, int characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
-
+        void getLeafPositions(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& nodePositions, const size_t size) const;
+        void getPositionsStartingWithFiller(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& nodePositions, const size_t size) const;
+        void advanceIupacCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
+        void advanceExactCharacter(const char& c, const int& characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
+        void printMotif(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        void getBestOccurence(const std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const;
 
 public:
         /**
@@ -559,6 +569,7 @@ public:
         * @Param motifs STPositions of different motifs in T (output)
         */
         int printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
+        int printMotifsWithPositions(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
 
 };
 
