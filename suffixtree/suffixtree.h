@@ -356,6 +356,9 @@ public:
 // CLASS SUFFIX TREE
 // ============================================================================
 
+class SuffixTree;
+typedef void (SuffixTree::*printMotifPtr)(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+
 class SuffixTree {
 
 private:
@@ -506,28 +509,33 @@ private:
 
         void recPrintMotifs(const std::pair<short, short>& l,
           const int& maxDegenerateLetters, const BLSScore& bls,
-          STPositionsPerLetter& positions, const std::string& prefix,
+          STPositionsPerLetter& matchingNodes, const std::string& prefix,
           int curDegenerateLetters, std::ostream& out);
         // this next one also returns all positions the current Motif matches
         void recPrintMotifsWithPositions(const std::pair<short, short>& l,
           const int& maxDegenerateLetters, const BLSScore& bls,
-          STPositionsPerLetter& positions, std::vector<std::pair<int, int>>& stringPositions, const std::string& prefix,
+          STPositionsPerLetter& matchingNodes, std::vector<std::pair<int, int>>& stringPositions, const std::string& prefix,
           int curDegenerateLetters, std::ostream& out);
 
         void getLeafPositions(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& nodePositions, const size_t size) const;
-        void getPositionsStartingWithFiller(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& nodePositions, const size_t size) const;
-        void advanceIupacCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
-        void advanceExactCharacter(const char& c, const int& characterPos, STPositionsPerLetter& positions, occurence_bits& occurence) const;
-        void printMotif(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        void getPositionsStartingWithDelimiter(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& nodePositions, const size_t size) const;
+
+        void advanceIupacCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
+        void advanceExactCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
         void getBestOccurence(const std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const;
+
+        void printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        void printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        printMotifPtr printMotif;
 
 public:
         /**
          * Constructor
          * @param T Text to be indexed
          */
-        SuffixTree(const std::string& T) : SuffixTree(T, false) {}
-        SuffixTree(const std::string& T, bool hasReverseComplement);
+        // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
+        // SuffixTree(const std::string& T, bool hasReverseComplement);
+        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_);
 
         /**
          * Destructor
@@ -541,7 +549,12 @@ public:
          */
         void matchPattern(const std::string& P, std::vector<size_t>& occ);
         std::vector<STPosition> matchIupacPattern(const std::string& P, int maxDegenerateLetters, occurence_bits& occurence);
+        std::vector<std::pair<int, int>> matchIupacPatternWithPositions(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
         void matchPattern(const std::string& P, BLSScore& bls);
+        std::string printPosPair(std::pair<int, int> p, size_t length) {
+              size_t pos = stringStartPositions[p.first] + p.second;
+              return T.substr(pos, length);
+        }
 
 
         /**
@@ -568,8 +581,9 @@ public:
         * @Param l Length of motifs to find
         * @Param motifs STPositions of different motifs in T (output)
         */
-        int printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
-        int printMotifsWithPositions(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out);
+        int printMotifs(const std::pair<short, short>& l, const Alphabet alphabet,
+          const int& maxDegenerateLetters, const BLSScore& bls,
+          std::ostream& out, bool isAlignmentBased);
 
 };
 

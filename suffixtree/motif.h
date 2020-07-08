@@ -13,6 +13,7 @@
 #define N_BITS 5 // must be at least the maximum number of organisms
 typedef unsigned char occurence_bits; // define type here to easily expand number of bits in code!
 
+
 enum IUPAC {
     BASE_A =  0x1,
     BASE_C =  0x2,
@@ -176,6 +177,8 @@ private:
     static const std::vector<char> representation;
 
 public:
+    static const char FILLER = '-';
+    static const char DELIMITER = '$';
     static const std::vector<IupacMask> characterToMask;
     IupacMask() : mask(0) {}
     IupacMask(const IUPAC mask_ ) : mask(mask_) {}

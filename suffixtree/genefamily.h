@@ -13,9 +13,9 @@ class GeneFamily {
 private:
 
 public:
-  static void readOrthologousFamily(const std::string& filename, std::pair<short, short> l, int maxDegeneration);
+  static void readOrthologousFamily(const std::string& filename, bool typeIsAB, std::pair<short, short> l, int maxDegeneration);
 
-  static void readOrthologousFamily(std::istream& ifs, std::pair<short, short> l, int maxDegeneration) ;
+  static void readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) ;
 };
 
 #endif

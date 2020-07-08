@@ -17,13 +17,15 @@ double stopChrono()
         return (elapsed.count());
 }
 
-void GeneFamily::readOrthologousFamily(const std::string& filename, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(const std::string& filename, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
     std::ifstream ifs(filename.c_str());
-    readOrthologousFamily(ifs, l, maxDegeneration);
+    readOrthologousFamily(ifs, typeIsAB, l, maxDegeneration);
 }
 
-void GeneFamily::readOrthologousFamily(std::istream& ifs, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
   int totalCount = 0;
+  std::vector<size_t> stringStartPositions;
+  stringStartPositions.push_back(0);
   while (ifs) {
     // READ DATA
     std::string T, newick, line, name;
@@ -38,22 +40,43 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::pair<short, short
         getline(ifs, line);
         getline(ifs, line);
         if (!T.empty())
-            T.push_back('#');
+            T.push_back(IupacMask::DELIMITER);
         std::for_each(line.begin(), line.end(), [](char & c) { // convert all to upper case!
-            c = ::toupper(c);
+            if(c == IupacMask::FILLER)
+                c = IupacMask::DELIMITER;
+            else
+                c = ::toupper(c);
         });
         T.append(line);
-        T.push_back('#');
+        T.push_back(IupacMask::DELIMITER);
+        stringStartPositions.push_back(T.size());
         T.append(Motif::ReverseComplement(line));
+        stringStartPositions.push_back(T.size() + 1);
     }
-    T.push_back('$');
+    T.push_back(IupacMask::DELIMITER);
+
     // std::cerr << "T: " << T << std::endl;
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
     BLSScore bls(newick);
-    SuffixTree ST(T, true);
-    int count = ST.printMotifsWithPositions(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout);
+    SuffixTree ST(T, true, stringStartPositions);
+
+// TEST WRONG MOTIFS...
+    // std::string testMotif = "CSCGRMC";
+    // occurence_bits occurence;
+    // std::vector<std::pair<int, int>> testpos = ST.matchIupacPatternWithPositions(testMotif, bls, 3, occurence);
+    // std::cerr << "testing " << testMotif << " with best occurence: " << +occurence << std::endl;
+    // for (auto p: testpos) {
+    //     std::cerr << "[" << p.first << ", " << p.second << "]: " << ST.printPosPair(p, testMotif.length()) << std::endl;
+    // }
+    // int count = 0;
+
+
+// FINAL CODE
+    int count = ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout, typeIsAB);
+
+
     totalCount += count;
     double elapsed = stopChrono();
     std::cerr << "[" << name << "] counted " << count << " motifs in " << elapsed << "s" << std::endl;

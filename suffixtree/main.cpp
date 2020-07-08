@@ -24,41 +24,31 @@
 
 using namespace std;
 
-
-void readInput(const string& filename, string& T)
-{
-        ifstream ifs(filename.c_str());
-
-        while (ifs) {
-                string line;
-                getline(ifs, line);
-
-                if (line.empty())
-                        continue;
-
-                if (!T.empty())
-                        T.push_back('#');
-                T.append(line);
-        }
-
-        T.push_back('$');
-}
-
 int main(int argc, char* argv[])
 {
         std::pair<short, short> l(6, 13);
         int maxDegeneration = 3;
-        if (argc >= 2) {
-            if (argc >= 3 ) {
-                maxDegeneration = std::stoi(argv[2]);
-                if (argc >= 5) {
-                    l.first = std::stoi(argv[3]);
-                    l.second =std::stoi(argv[4]);
+        if(argc < 2) {
+            std::cerr << "usage: ./motifIterator type [file/stdin] [maxDegeneration] [l.min l.max]" << std::endl;
+            std::cerr << "\ttype: AB or AF" << std::endl;
+        }
+        bool typeIsAB = (strcmp(argv[1], "AB") == 0);
+        std::cerr << (typeIsAB ? "Alignment Based" : "Alignment Free") << std::endl;
+        if (argc >= 3) {
+            if (argc >= 4 ) {
+                maxDegeneration = std::stoi(argv[3]);
+                if (argc >= 6) {
+                    l.first = std::stoi(argv[4]);
+                    l.second =std::stoi(argv[5]);
                 }
             }
-            GeneFamily::readOrthologousFamily(argv[1], l, maxDegeneration);
+
+            if ((strcmp(argv[2], "stdin") == 0))
+                GeneFamily::readOrthologousFamily(std::cin, typeIsAB, l, maxDegeneration);
+            else
+                GeneFamily::readOrthologousFamily(argv[2], typeIsAB, l, maxDegeneration);
         } else {
-            GeneFamily::readOrthologousFamily(std::cin, l, maxDegeneration);
+            GeneFamily::readOrthologousFamily(std::cin, typeIsAB, l, maxDegeneration);
         }
         return EXIT_SUCCESS;
 }
