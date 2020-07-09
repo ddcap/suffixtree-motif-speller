@@ -24,9 +24,9 @@ void GeneFamily::readOrthologousFamily(const std::string& filename, bool typeIsA
 
 void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
   int totalCount = 0;
-  std::vector<size_t> stringStartPositions;
-  stringStartPositions.push_back(0);
   while (ifs) {
+    std::vector<size_t> stringStartPositions;
+    stringStartPositions.push_back(0);
     // READ DATA
     std::string T, newick, line, name;
     int N;
@@ -63,7 +63,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
     SuffixTree ST(T, true, stringStartPositions);
 
 // TEST WRONG MOTIFS...
-    // std::string testMotif = "CSCGRMC";
+    // std::string testMotif = "AAAAAARWCARA";
     // occurence_bits occurence;
     // std::vector<std::pair<int, int>> testpos = ST.matchIupacPatternWithPositions(testMotif, bls, 3, occurence);
     // std::cerr << "testing " << testMotif << " with best occurence: " << +occurence << std::endl;

@@ -260,7 +260,7 @@ void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostr
 
     //write Vector
     char toWrite = 0;
-    for(int i = 0; i < 8 - size; i++) {
+    for(int i = 0; i < size; i++) { // was 8- size?? why??
         toWrite |= preparedBLSVector[occurence][i] << i;
     }
     out.write(&toWrite, 1);

@@ -522,11 +522,18 @@ private:
 
         void advanceIupacCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
         void advanceExactCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
-        void getBestOccurence(const std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const;
+        void getBestOccurence(std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const;
 
         void printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
         void printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
-        printMotifPtr printMotif;
+
+        printMotifPtr printMotif = &SuffixTree::printMotifBinary;
+        // printMotifPtr printMotif = &SuffixTree::printMotifString;
+
+        static bool positionPairSort(const std::pair<int,int> &a,  const std::pair<int,int> &b)
+        {
+            return a.second < b.second;
+        }
 
 public:
         /**

@@ -497,7 +497,7 @@ void SuffixTree::recPrintMotifsWithPositions(const std::pair<short, short>& l,
 //TODO fix max positions -> but still find postions here and return to above
     int i = 0;
     int validChildren = 0;
-    // std::string motif = "CSCGRMC";
+    // std::string motif = "AAAAAARWCARA";
 
     if((unsigned char) prefix.length() +  1 < l.second) { // only extend if possible, else only get positions
         const std::vector<IupacMask>* curalphabet = (curDegenerateLetters == maxDegenerateLetters) ?  &exactAlphabet : this->alphabet;
@@ -510,11 +510,6 @@ void SuffixTree::recPrintMotifsWithPositions(const std::pair<short, short>& l,
 
             // if(motif == (prefix + extension.getRepresentation()).substr(0, motif.length())) {
             //     std::cerr << prefix + extension.getRepresentation() << " found at " << matchingNodes.list[prefix.size() + 1].validPositions << " positions\n";
-            //
-            //     for(size_t j = 0; j < matchingNodes.list[i+1].validPositions; j++) {
-            //         std::cerr << "pos: " << matchingNodes.list[i+1].list[j].getPositionInText() << ": " <<
-            //         T.substr(matchingNodes.list[i+1].list[j].getPositionInText() - matchingNodes.list[i+1].list[j].getDepth(), i + 1) << std::endl;
-            //     }
             // }
 
             // can be extended if at least one new position is found!
@@ -560,29 +555,25 @@ void SuffixTree::recPrintMotifsWithPositions(const std::pair<short, short>& l,
 
 }
 
-void SuffixTree::getBestOccurence(const std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const {
+// TODO fix bug with scores here, is incorrect now...
+void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const {
     occurence = 0;
     float maxBls = 0;
-    std::vector<std::vector<size_t>> occurences(T.size() / (stringStartPositions.size() - 1));
-    // std::cerr << "max: " << T.size() / (stringStartPositions.size() - 1) << std::endl;
-    // for(auto p : positions) {
-    //     std::cerr << "pos : " << p.first << ", " << p.second << std::endl;
-    // }
-    for(auto p : positions) {
-        occurences[p.second].push_back(p.first);
-    }
-    for(size_t i = 0;  i < occurences.size(); i++) {
-        if(occurences[i].empty()) continue;
+    sort(positions.begin(), positions.end(), SuffixTree::positionPairSort);
+    size_t i = 0;
+    while(i < positions.size()) {
         occurence_bits motifOcc(0);
         occurence_bits rcOcc(0);
-        for (auto p : occurences[i]) {
-            if(p % reverseComplementFactor == 0) {
-                motifOcc |= 1 << p / reverseComplementFactor;
+        int pos = positions[i].second;
+        while(i < positions.size() && pos == positions[i].second) {
+            if(positions[i].first % reverseComplementFactor == 0) {
+                motifOcc |= 1 << (positions[i].first / reverseComplementFactor);
             } else {
-                rcOcc |= 1 << p / reverseComplementFactor;
+                rcOcc |= 1 << (positions[i].first / reverseComplementFactor);
             }
+            i++;
         }
-        // std::cerr << "occurence at pos " << i << ": " << +motifOcc << " and rc : " << +rcOcc << std::endl;
+        // std::cerr << "pos: " << pos << " -> occ: " << +motifOcc << " rvOcc: " << +rcOcc << std::endl;
         if(bls.getBLSScore(motifOcc) > maxBls) {
             maxBls = bls.getBLSScore(motifOcc);
             occurence = motifOcc;
@@ -746,8 +737,6 @@ SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<s
         // construct suffix tree using Ukonen's algorithm
         constructUkonen();
 
-        // printMotif = &SuffixTree::printMotifString;
-        printMotif = &SuffixTree::printMotifBinary;
 }
 
 

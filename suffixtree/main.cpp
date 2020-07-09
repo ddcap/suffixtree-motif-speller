@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
                 }
             }
 
-            if ((strcmp(argv[2], "stdin") == 0))
+            if ((strcmp(argv[2], "stdin") == 0) || (strcmp(argv[2], "-") == 0))
                 GeneFamily::readOrthologousFamily(std::cin, typeIsAB, l, maxDegeneration);
             else
                 GeneFamily::readOrthologousFamily(argv[2], typeIsAB, l, maxDegeneration);
