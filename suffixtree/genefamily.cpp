@@ -63,23 +63,25 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
     SuffixTree ST(T, true, stringStartPositions);
 
 // TEST WRONG MOTIFS...
-    // std::string testMotif = "AAAAAARWCARA";
+    // std::string testMotif = "SCGYCN";
     // occurence_bits occurence;
     // std::vector<std::pair<int, int>> testpos = ST.matchIupacPatternWithPositions(testMotif, bls, 3, occurence);
-    // std::cerr << "testing " << testMotif << " with best occurence: " << +occurence << std::endl;
+    // std::cerr << "testing " << testMotif << " with best occurence: " << +occurence  << " and BLS: " << bls.getBLSScore(occurence) << std::endl;
     // for (auto p: testpos) {
-    //     std::cerr << "[" << p.first << ", " << p.second << "]: " << ST.printPosPair(p, testMotif.length()) << std::endl;
+        // std::cerr << "[" << p.first << ", " << p.second << "]: " << ST.printPosPair(p, testMotif.length()) << std::endl;
     // }
     // int count = 0;
 
 
 // FINAL CODE
     int count = ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout, typeIsAB);
-
+    size_t iteratorcount = ST.getMotifsIteratedCount();
 
     totalCount += count;
     double elapsed = stopChrono();
+    std::cerr << "[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
     std::cerr << "[" << name << "] counted " << count << " motifs in " << elapsed << "s" << std::endl;
+
   }
   std::cerr << "total motifs iterated: " << totalCount << std::endl;
 }

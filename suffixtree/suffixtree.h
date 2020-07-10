@@ -504,6 +504,7 @@ private:
         const std::vector<IupacMask> *alphabet;
         int reverseComplementFactor = 1;
         int motifCount;
+        size_t iteratorCount;
         std::vector<size_t> stringStartPositions; // indicates where new strings start
         // --------------------------------------------------------------------
 
@@ -522,7 +523,7 @@ private:
 
         void advanceIupacCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
         void advanceExactCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
-        void getBestOccurence(std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence) const;
+        void getBestOccurence(std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence);
 
         void printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
         void printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
@@ -562,6 +563,7 @@ public:
               size_t pos = stringStartPositions[p.first] + p.second;
               return T.substr(pos, length);
         }
+        size_t getMotifsIteratedCount() { return iteratorCount; }
 
 
         /**
