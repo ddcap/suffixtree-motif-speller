@@ -528,8 +528,8 @@ private:
         void printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
         void printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
 
-        printMotifPtr printMotif = &SuffixTree::printMotifBinary;
-        // printMotifPtr printMotif = &SuffixTree::printMotifString;
+        // printMotifPtr printMotif = &SuffixTree::printMotifBinary;
+        printMotifPtr printMotif = &SuffixTree::printMotifString;
 
         static bool positionPairSort(const std::pair<int,int> &a,  const std::pair<int,int> &b)
         {
