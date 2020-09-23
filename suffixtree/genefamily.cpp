@@ -80,8 +80,8 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
     totalCount += count;
     double elapsed = stopChrono();
     std::cerr << "[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
-    std::cerr << "[" << name << "] counted " << count << " motifs in " << elapsed << "s" << std::endl;
+    std::cerr << "[" << name << "] counted " << count << " valid motifs in " << elapsed << "s" << std::endl;
 
   }
-  std::cerr << "total motifs iterated: " << totalCount << std::endl;
+  std::cerr << "total motifs counted: " << totalCount << std::endl;
 }

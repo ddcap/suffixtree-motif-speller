@@ -467,6 +467,7 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
         // can be extended if at least one new position is found!
         if(matchingNodes.list[prefix.size() + 1].validPositions > 0) {
             std::string currentMotif = prefix + extension.getRepresentation();
+            iteratorCount++;
             if(bls.greaterThanMinThreshold(occurence)) {
 
                if((unsigned char) currentMotif.length() >= l.first) { // print motif if correct length!
@@ -783,7 +784,7 @@ int SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alp
         else
             this->alphabet = &(this->exactTwofoldAndNAlphabet);
 
-        STPositionsPerLetter positions(l.second, maxDegenerateLetters);
+        STPositionsPerLetter positions(l.second, maxDegenerateLetters); // 13
 
 // start from iupacword
         // std::string iupacword = "TNAGC";

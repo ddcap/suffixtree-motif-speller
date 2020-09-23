@@ -1,0 +1,7 @@
+cmd: make
+
+cwd: /home/ddecap/source/suffixtree_motif_speller/process_input/build
+
+name: "prepInput"
+
+sh: true
