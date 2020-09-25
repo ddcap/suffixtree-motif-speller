@@ -60,6 +60,8 @@ public:
     static std::string getRepresentative(const std::string& read);
     static void writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out);
     static void writeGroupIDAndMotif(const std::string& motif, std::ostream& out);
+    static void writeMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out);
+    static void writeMotif(const std::string& motif, std::ostream& out);
 };
 
 // class MotifCollection {
@@ -134,15 +136,15 @@ private:
     float calculateBLSScore(const occurence_bits& occurence) const;
     std::vector<int> calculateBLSVector(const float& bls) const;
     void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot);
-    void prepAllCombinations();
+    void prepAllCombinations(int used_bits);
 
 public:
     // example: ((BD1G15520:0.2688, OS03G38520:0.2688):0.0538, (SB01G015780:0.086, (ZM01G45380:1.0E-6,ZM05G08300:1.0E-6):0.086):0.2366);
-    BLSScore(std::string newick) {
+    BLSScore(std::string newick, int species) {
         root = new BLSLinkedListNode();
         int leafnr = 0;
         recReadBranch(0, leafnr, newick, root);
-        prepAllCombinations();
+        prepAllCombinations(species);
     }
     ~BLSScore() {
         // Depth-first traversal of the tree

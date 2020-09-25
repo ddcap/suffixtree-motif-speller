@@ -65,6 +65,7 @@ void Orthology::readOrthology(std::ostream& o, Genes *genemap, Newick *newick, s
                 splitpos2 = line.find('\t', splitpos1+1);
                 species_count = std::stoi(line.substr(splitpos1+1, splitpos2));
                 if(species_count > 1) {
+                    std::cerr << "cluster " << cluster << std::endl;
                     count++;
                     genes = line.substr(splitpos2+1);
                     formatGeneList(o, genemap, newick, cluster, genes);

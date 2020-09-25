@@ -30,6 +30,18 @@ using namespace std;
 // SUFFIX TREE (PRIVATE FUNCTIONS)
 // ============================================================================
 
+const std::vector<char> STNode::Alphabet ({ 'A', 'C', 'G', 'T', 'N', ' ', '$' });
+// '$' is deliminter, ' ' is used to separate genes of same species and  'N'  is used to max exons
+// const std::vector<short> STNode::charToIndex ({
+const short STNode::charToIndex[] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
+     5, -1, -1, -1,  6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 32
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 48
+    -1,  0, -1,  1, -1, -1, -1,  2, -1, -1, -1, -1, -1, -1,  4, -1, // 64
+    -1, -1, -1, -1,  3 // 80
+};
+
 // ----------------------------------------------------------------------------
 // ROUTINES TO MANIPULATE SUFFIX TREE POSITIONS
 // ----------------------------------------------------------------------------
@@ -195,6 +207,7 @@ STPosition SuffixTree::splitEdge(const STPosition& pos)
         STNode *chd = pos.node;
         STNode *par = chd->getParent();
         STNode *mid = new STNode(chd->begin(), chd->begin() + pos.offset);
+        node_count++;
         mid->setOccurence(chd->getOccurence());
         chd->setBegin(mid->end());
 
@@ -209,6 +222,7 @@ STPosition SuffixTree::splitEdge(const STPosition& pos)
 void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex)
 {
         STNode *leaf = new STNode(suffixIndex + pos.getDepth(), T.size());
+        node_count++;
         leaf->setSuffixIdx(suffixIndex);
         pos.node->setChild(T[suffixIndex + pos.getDepth()], leaf);
         // std::cerr << "added new leaf:" << T.substr(suffixIndex + pos.getDepth()) << " ";
@@ -324,6 +338,8 @@ void SuffixTree::constructNaive()
 {
         // create a node with an empty range (it has no parent)
         root = new STNode(0, 0);
+        node_count++;
+
 
         for (size_t i = 0; i < T.size(); i++) {
                 // find position in ST that maximally matches the prefix of suf_i(T)
@@ -355,6 +371,7 @@ void SuffixTree::constructUkonen()
 {
         // create root node with an empty range (it has no parent)
         root = new STNode(0, 0);
+        node_count ++;
 
         // algorithm invariant: pos points to T[i:j-1[
         STPosition pos(root);
@@ -363,7 +380,6 @@ void SuffixTree::constructUkonen()
 
         // in phase j, build implicit suffix tree for prefix T[0:j[
         for (size_t j = 1, numLeaves = 0; j <= T.size(); j++) {
-                // std::cout << "current j " << j << " is at " << T[j] << std::endl;
                 STNode *prevInternal = NULL;
                 // i starts from numleaves -> keep the current bit to set in a variable!
 
@@ -422,23 +438,26 @@ void SuffixTree::constructUkonen()
                         // std::cerr << *this << std::endl;
                 }
         }
+        std::cerr << "ST of length "<< T.size() <<  ", memory usage: " <<  ((sizeof(SuffixTree) + sizeof(STNode) * node_count) / 1024 / 1024) << "MB" << std::endl;
 }
 
 // Routines to explore SuffixTree
-void SuffixTree::printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
+void SuffixTree::printMotifString(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
     // std::cerr << "nodes that match " << currentMotif << ":  with occ " << +occurence << " and blsScore: " << bls.getBLSScore(occurence) << std::endl;
     if(Motif::isRepresentative(currentMotif)) {
-        Motif::writeGroupIDAndMotif(currentMotif, out);
+        Motif::writeMotif(currentMotif, out);
+        // Motif::writeGroupIDAndMotif(currentMotif, out);
         out << "\t";
         bls.writeBLSVector(occurence, out);
         out << '\n'; // std::endl has a flushline which destroys performance.
         motifCount++;
     }
 }
-void SuffixTree::printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
+void SuffixTree::printMotifBinary(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
     // std::cerr << "nodes that match " << currentMotif << ":  with occ " << +occurence << " and blsScore: " << bls.getBLSScore(occurence) << std::endl;
     if(Motif::isRepresentative(currentMotif)) {
-        Motif::writeGroupIDAndMotifInBinary(currentMotif, out);
+        Motif::writeMotifInBinary(currentMotif, maxlen, out);
+        // Motif::writeGroupIDAndMotifInBinary(currentMotif, out);
         bls.writeBLSVectorInBinary(occurence, out);
         motifCount++;
     }
@@ -468,10 +487,11 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
         if(matchingNodes.list[prefix.size() + 1].validPositions > 0) {
             std::string currentMotif = prefix + extension.getRepresentation();
             iteratorCount++;
+            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             if(bls.greaterThanMinThreshold(occurence)) {
 
                if((unsigned char) currentMotif.length() >= l.first) { // print motif if correct length!
-                    (this->*printMotif)(currentMotif, bls, occurence, out);
+                    (this->*printMotif)(l.second, currentMotif, bls, occurence, out);
                }
 
                 if((unsigned char) currentMotif.length() +  1 == l.second) { // max length reached, we do not recurse into the next extension
@@ -538,7 +558,7 @@ void SuffixTree::recPrintMotifsWithPositions(const std::pair<short, short>& l,
                     //         std::cerr << "pos : " << p.first <<", " << p.second << std::endl;
                     // }
                     if(bls.greaterThanMinThreshold(occurence)) { // print motif if correct length
-                        (this->*printMotif)(currentMotif, bls, occurence, out);
+                        (this->*printMotif)(l.second, currentMotif, bls, occurence, out);
                     }
                 }
             }
@@ -581,6 +601,7 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
         // std::cerr << "pos: " << pos << " -> occ: " << +motifOcc << " rvOcc: " << +rcOcc << std::endl;
         if(__builtin_popcountll(motifOcc) > 1) {
             iteratorCount++;
+            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             float score = bls.getBLSScore(motifOcc);
             if(score > maxBls) {
                 maxBls = score;
@@ -589,6 +610,7 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
         }
         if(__builtin_popcountll(rcOcc) > 1) {
             iteratorCount++;
+            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             float score = bls.getBLSScore(rcOcc);
             if(score > maxBls) {
                 maxBls = score;

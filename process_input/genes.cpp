@@ -9,7 +9,7 @@ void Genes::readFastas(std::string directory) {
 
     for (const auto & entry : std::filesystem::directory_iterator(directory)) {
         if(entry.is_directory()) {
-          std::cerr << "\33[2K" << '\r' << "reading genes of " << entry.path().filename().string() << std::flush; // white space to write over longer names
+          std::cerr << "\33[2K\rreading genes of " << entry.path().filename().string() << std::flush; // white space to write over longer names
           std::string fastafile = "";
           for (const auto & file : std::filesystem::directory_iterator(entry)) {
               if(file.is_regular_file() && file.path().extension() == ".fasta") {

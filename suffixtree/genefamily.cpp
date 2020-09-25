@@ -52,6 +52,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
         stringStartPositions.push_back(T.size());
         T.append(Motif::ReverseComplement(line));
         stringStartPositions.push_back(T.size() + 1);
+        // std::cout << T << std::endl;
     }
     T.push_back(IupacMask::DELIMITER);
 
@@ -59,7 +60,8 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
-    BLSScore bls(newick);
+    BLSScore bls(newick, N);
+    // std::cout << T << std::flush;
     SuffixTree ST(T, true, stringStartPositions);
 
 // TEST WRONG MOTIFS...
@@ -79,7 +81,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
 
     totalCount += count;
     double elapsed = stopChrono();
-    std::cerr << "[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
+    std::cerr << "\33[2K\r[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
     std::cerr << "[" << name << "] counted " << count << " valid motifs in " << elapsed << "s" << std::endl;
 
   }

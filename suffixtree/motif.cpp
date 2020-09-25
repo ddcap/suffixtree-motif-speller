@@ -7,7 +7,7 @@
 const std::vector<char> Motif::complement ({
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
-    0, 0, 0, '#', '$', 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, // 32 // this is for the alignment based RC, replace '-' with '-'
+    ' ', 0, 0, '#', '$', 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, // 32 // this is for the alignment based RC, replace '-' with '-'
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 48
     0, 'T', 'V', 'G', 'H', 0, 0, 'C', 'D', 0, 0, 'M', 0, 'K', 'N', 0, // 64
     0, 0, 'Y', 'S', 'A', 0, 'B', 'W', 0, 'R' // 80
@@ -41,8 +41,27 @@ bool Motif::isGroupRepresentative(const std::string& read) {
     return read <= rc;
 }
 
+void Motif::writeMotif(const std::string& motif, std::ostream& out) {
+    out << motif;
+}
 void Motif::writeGroupIDAndMotif(const std::string& motif, std::ostream& out) {
     out << getGroupID(motif) << "\t" << motif;
+}
+void Motif::writeMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out) {
+    char size = motif.length(); // assumes length isnt more than 255 chars
+    // write size
+    out.write(&size, 1);
+    char numberOfBytes = maxlen >> 1; // works since this maxlen is non inclusive (< instead of <=)
+
+    //write Motif
+    for(int i = 0; i < numberOfBytes; i++) {
+        char toWrite = 0;
+        if(i*2 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+        if(i*2 + 1 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
+        out.write(&toWrite, 1);
+    }
 }
 
 void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out) {
@@ -154,13 +173,12 @@ float BLSLinkedListNode::getScore(const occurence_bits& occurence) {
 
 
 // BLSSCORE
-void BLSScore::prepAllCombinations() {
+void BLSScore::prepAllCombinations(int used_bits) {
     // precalculate all combinations of occurence
-    for (int i = 0; i < pow(2, N_BITS); i++) {
+    for (int i = 0; i < pow(2, used_bits); i++) {
         occurence_bits occurence(i);
         preparedBLS.push_back(calculateBLSScore(occurence));
         preparedBLSVector.push_back(calculateBLSVector(preparedBLS[i]));
-        // std::cerr << "prepping " << +occurence << " " << preparedBLS[i] << std::endl;
     }
 }
 

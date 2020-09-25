@@ -11,7 +11,7 @@ void Newick::print_renormalised_tree(std::ostream& o, std::vector<std::string> s
     // std::cerr << "printing renormalised tree with these species: " << std::endl;
     root->resetUsed();
     for (auto x : species) {
-        std::cerr << "- " << x << std::endl;
+        // std::cerr << "- " << x << std::endl;
         root->useSpecies(x);
         // std::cerr << "tree: \n" << *root << std::endl;
     }

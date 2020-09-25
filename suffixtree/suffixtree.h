@@ -40,7 +40,10 @@ typedef std::tuple<size_t, size_t, size_t> MEMOcc;
 enum Alphabet { EXACT, TWOFOLDSANDN, EXACTANDN };
 
 
-#define MAX_CHAR 256
+#define MAX_ASCII_CHAR 85
+#define MAX_CHAR 7
+// #define MAX_CHAR 256
+// 7 characters in string -> acgt n $ and  space others will give index -1 in array which will crash the program.
 
 // ============================================================================
 // CLASS SUFFIX TREE NODE
@@ -66,6 +69,9 @@ private:
         length_t depth;                 // depth of current node
         length_t suffixIdx;             // suffix index (only for leaf nodes)
         occurence_bits occurence;
+        static const std::vector<char> Alphabet;
+        // static const std::vector<short> charToIndex;
+        static const short charToIndex[MAX_ASCII_CHAR];
 
 public:
         /**
@@ -153,7 +159,8 @@ public:
          * @param c Character c
          */
         STNode* getChild(char c) const {
-                return child[static_cast<unsigned char>(c)];
+                return child[charToIndex[static_cast<unsigned char>(c)]];
+                // return child[static_cast<unsigned char>(c)];
         }
 
         /**
@@ -164,7 +171,8 @@ public:
         void setChild(char c, STNode* chdToAdd) {
                 chdToAdd->parent = this;
                 chdToAdd->depth = depth + chdToAdd->getEdgeLength();
-                child[static_cast<unsigned char>(c)] = chdToAdd;
+                child[charToIndex[static_cast<unsigned char>(c)]] = chdToAdd;
+                // child[static_cast<unsigned char>(c)] = chdToAdd;
         }
 
         /**
@@ -357,7 +365,7 @@ public:
 // ============================================================================
 
 class SuffixTree;
-typedef void (SuffixTree::*printMotifPtr)(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+typedef void (SuffixTree::*printMotifPtr)(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
 
 class SuffixTree {
 
@@ -505,6 +513,7 @@ private:
         int reverseComplementFactor = 1;
         int motifCount;
         size_t iteratorCount;
+        size_t node_count = 0;
         std::vector<size_t> stringStartPositions; // indicates where new strings start
         // --------------------------------------------------------------------
 
@@ -525,11 +534,11 @@ private:
         void advanceExactCharacter(const IupacMask& mask, const int& characterPos, STPositionsPerLetter& matchingNodes, occurence_bits& occurence) const;
         void getBestOccurence(std::vector<std::pair<int, int>>& positions, const BLSScore& bls, occurence_bits& occurence);
 
-        void printMotifBinary(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
-        void printMotifString(const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        void printMotifBinary(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
+        void printMotifString(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
 
-        // printMotifPtr printMotif = &SuffixTree::printMotifBinary;
-        printMotifPtr printMotif = &SuffixTree::printMotifString;
+        printMotifPtr printMotif = &SuffixTree::printMotifBinary;
+        // printMotifPtr printMotif = &SuffixTree::printMotifString;
 
         static bool positionPairSort(const std::pair<int,int> &a,  const std::pair<int,int> &b)
         {
