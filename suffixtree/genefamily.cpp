@@ -17,12 +17,12 @@ double stopChrono()
         return (elapsed.count());
 }
 
-void GeneFamily::readOrthologousFamily(const std::string& filename, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(const std::string& filename, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
     std::ifstream ifs(filename.c_str());
-    readOrthologousFamily(ifs, typeIsAB, l, maxDegeneration);
+    readOrthologousFamily(ifs, alphabet, typeIsAB, l, maxDegeneration);
 }
 
-void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(std::istream& ifs, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
   int totalCount = 0;
   while (ifs) {
     std::vector<size_t> stringStartPositions;
@@ -76,7 +76,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, bool typeIsAB, std::pa
 
 
 // FINAL CODE
-    int count = ST.printMotifs(l, TWOFOLDSANDN, maxDegeneration, bls, std::cout, typeIsAB);
+    int count = ST.printMotifs(l, alphabet, maxDegeneration, bls, std::cout, typeIsAB);
     size_t iteratorcount = ST.getMotifsIteratedCount();
 
     totalCount += count;

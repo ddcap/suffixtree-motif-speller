@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <bitset>
+#include "suffixtree.h"
 #include "genefamily.h"
 
 using namespace std;
@@ -28,27 +29,29 @@ int main(int argc, char* argv[])
 {
         std::pair<short, short> l(6, 13);
         int maxDegeneration = 3;
-        if(argc < 2) {
-            std::cerr << "usage: ./motifIterator type [file/stdin] [maxDegeneration] [l.min l.max]" << std::endl;
+        if(argc < 3) {
+            std::cerr << "usage: ./motifIterator type alphabet [file/stdin] [maxDegeneration] [l.min l.max]" << std::endl;
             std::cerr << "\ttype: AB or AF" << std::endl;
+            std::cerr << "\talpbat (int):\t0: Exact, 1: Exact And N, 2: Exact, Twofolds And N, 3: All" << std::endl;
         }
         bool typeIsAB = (strcmp(argv[1], "AB") == 0);
+        Alphabet alphabet = (Alphabet)std::stoi(argv[2]);
         std::cerr << (typeIsAB ? "Alignment Based" : "Alignment Free") << std::endl;
         if (argc >= 3) {
             if (argc >= 4 ) {
-                maxDegeneration = std::stoi(argv[3]);
+                maxDegeneration = std::stoi(argv[4]);
                 if (argc >= 6) {
-                    l.first = std::stoi(argv[4]);
-                    l.second =std::stoi(argv[5]);
+                    l.first = std::stoi(argv[5]);
+                    l.second = std::stoi(argv[6]);
                 }
             }
 
-            if ((strcmp(argv[2], "stdin") == 0) || (strcmp(argv[2], "-") == 0))
-                GeneFamily::readOrthologousFamily(std::cin, typeIsAB, l, maxDegeneration);
+            if ((strcmp(argv[3], "stdin") == 0) || (strcmp(argv[3], "-") == 0))
+                GeneFamily::readOrthologousFamily(std::cin, alphabet, typeIsAB, l, maxDegeneration);
             else
-                GeneFamily::readOrthologousFamily(argv[2], typeIsAB, l, maxDegeneration);
+                GeneFamily::readOrthologousFamily(argv[3], alphabet, typeIsAB, l, maxDegeneration);
         } else {
-            GeneFamily::readOrthologousFamily(std::cin, typeIsAB, l, maxDegeneration);
+            GeneFamily::readOrthologousFamily(std::cin, alphabet, typeIsAB, l, maxDegeneration);
         }
         return EXIT_SUCCESS;
 }

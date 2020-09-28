@@ -753,6 +753,23 @@ const std::vector<IupacMask> SuffixTree::exactTwofoldAndNAlphabet ({
     IupacMask(IUPAC_K),
     IupacMask(IUPAC_M)
     });
+const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
+    IupacMask(BASE_A),
+    IupacMask(BASE_C),
+    IupacMask(BASE_G),
+    IupacMask(BASE_T),
+    IupacMask(IUPAC_N),
+    IupacMask(IUPAC_R),
+    IupacMask(IUPAC_Y),
+    IupacMask(IUPAC_S),
+    IupacMask(IUPAC_W),
+    IupacMask(IUPAC_K),
+    IupacMask(IUPAC_M),
+    IupacMask(IUPAC_V),
+    IupacMask(IUPAC_H),
+    IupacMask(IUPAC_D),
+    IupacMask(IUPAC_B)
+    });
 
 // ============================================================================
 // SUFFIX TREE (PUBLIC FUNCTIONS)
@@ -803,8 +820,10 @@ int SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alp
             this->alphabet = &(this->exactAlphabet);
         else if(alphabet == EXACTANDN)
             this->alphabet = &(this->exactAndNAlphabet);
-        else
+        else if (alphabet == TWOFOLDSANDN)
             this->alphabet = &(this->exactTwofoldAndNAlphabet);
+        else
+            this->alphabet = &(this->exactAndAllDegenerateAlphabet);
 
         STPositionsPerLetter positions(l.second, maxDegenerateLetters); // 13
 

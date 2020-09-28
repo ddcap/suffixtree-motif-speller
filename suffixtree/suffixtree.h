@@ -37,7 +37,7 @@ typedef uint32_t length_t;
 // <position in T, position in Q, length of MEM>
 typedef std::tuple<size_t, size_t, size_t> MEMOcc;
 
-enum Alphabet { EXACT, TWOFOLDSANDN, EXACTANDN };
+enum Alphabet { EXACT = 0x0, EXACTANDN = 0x1, TWOFOLDSANDN = 0x2, ALL = 0x3 };
 
 
 #define MAX_ASCII_CHAR 85
@@ -509,6 +509,7 @@ private:
         static const std::vector<IupacMask> exactAlphabet;
         static const std::vector<IupacMask> exactAndNAlphabet;
         static const std::vector<IupacMask> exactTwofoldAndNAlphabet;
+        static const std::vector<IupacMask> exactAndAllDegenerateAlphabet;
         const std::vector<IupacMask> *alphabet;
         int reverseComplementFactor = 1;
         int motifCount;
