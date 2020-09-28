@@ -10,6 +10,7 @@
 #include "newick.h"
 
 void Orthology::formatGeneList(std::ostream& o, Genes *genemap, Newick *newick, std::string cluster, std::string genelist) {
+    std::cerr << "cluster " << cluster << std::endl;
     o << cluster << '\n';
     std::unordered_map<std::string, std::string> species_to_genes_map;
     std::unordered_map<std::string, std::string> species_to_geneids_map;
@@ -45,7 +46,7 @@ void Orthology::formatGeneList(std::ostream& o, Genes *genemap, Newick *newick, 
     }
 
 }
-void Orthology::readOrthology(std::ostream& o, Genes *genemap, Newick *newick, std::string orthologyFile) {
+void Orthology::readOrthology(Genes *genemap, Newick *newick, std::string orthologyFile, std::string outputfolder) {
 
     std::ifstream f(orthologyFile);
     std::string line, cluster, genes;
@@ -65,13 +66,17 @@ void Orthology::readOrthology(std::ostream& o, Genes *genemap, Newick *newick, s
                 splitpos2 = line.find('\t', splitpos1+1);
                 species_count = std::stoi(line.substr(splitpos1+1, splitpos2));
                 if(species_count > 1) {
-                    std::cerr << "cluster " << cluster << std::endl;
                     count++;
                     genes = line.substr(splitpos2+1);
+                    // create ofstream o
+                    std::ofstream o;
+                    o.open(outputfolder + "/" + cluster);
                     formatGeneList(o, genemap, newick, cluster, genes);
+                    o.close();
                 }
             }
         }
     }
+    f.close();
     std::cerr << "found " << count << " clusters with more than 1 species" << std::endl;
 }

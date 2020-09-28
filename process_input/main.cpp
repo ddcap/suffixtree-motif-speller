@@ -28,7 +28,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     if(argc != 4) {
-        std::cerr << "usage: ./prepInput [folder of fasta files] [orthology file] [newick lengths file]" << std::endl;
+        std::cerr << "usage: ./prepInput [folder of fasta files] [orthology file] [newick lengths file] [outputfolder]" << std::endl;
         std::cerr << argv[0] << std::endl;
     }
 
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     std::cerr << "reading tree branch lengths from '" << argv[3] << "'" << std::endl;
     Newick newick(argv[3]);
     std::cerr << "reading orthology from '" << argv[2] << "'" << std::endl;
-    Orthology orthology(&genes, &newick, argv[2]);
+    Orthology orthology(&genes, &newick, argv[2], argv[4]);
 
     return EXIT_SUCCESS;
 }
