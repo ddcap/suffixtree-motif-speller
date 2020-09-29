@@ -128,7 +128,7 @@ public:
 
 class BLSScore {
 private:
-    static const std::vector<float> blsThresholds; // TODO this should be set in constructor or something
+    std::vector<float> blsThresholds;
     BLSLinkedListNode* root;
     std::vector<float> preparedBLS;
     std::vector<std::vector<int> > preparedBLSVector;
@@ -140,7 +140,7 @@ private:
 
 public:
     // example: ((BD1G15520:0.2688, OS03G38520:0.2688):0.0538, (SB01G015780:0.086, (ZM01G45380:1.0E-6,ZM05G08300:1.0E-6):0.086):0.2366);
-    BLSScore(std::string newick, int species) {
+    BLSScore(std::vector<float> blsThresholds_, std::string newick, int species) : blsThresholds(blsThresholds_){
         root = new BLSLinkedListNode();
         int leafnr = 0;
         recReadBranch(0, leafnr, newick, root);

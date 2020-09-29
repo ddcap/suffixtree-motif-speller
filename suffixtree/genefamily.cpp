@@ -17,12 +17,12 @@ double stopChrono()
         return (elapsed.count());
 }
 
-void GeneFamily::readOrthologousFamily(const std::string& filename, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(const std::string& filename, std::vector<float> blsThresholds_, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
     std::ifstream ifs(filename.c_str());
-    readOrthologousFamily(ifs, alphabet, typeIsAB, l, maxDegeneration);
+    readOrthologousFamily(ifs, blsThresholds_, alphabet, typeIsAB, l, maxDegeneration);
 }
 
-void GeneFamily::readOrthologousFamily(std::istream& ifs, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> blsThresholds_, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
   int totalCount = 0;
   while (ifs) {
     std::vector<size_t> stringStartPositions;
@@ -60,7 +60,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, Alphabet alphabet, boo
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
-    BLSScore bls(newick, N);
+    BLSScore bls(blsThresholds_, newick, N);
     // std::cout << T << std::flush;
     SuffixTree ST(T, true, stringStartPositions);
 

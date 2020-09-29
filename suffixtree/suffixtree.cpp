@@ -487,7 +487,7 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
         if(matchingNodes.list[prefix.size() + 1].validPositions > 0) {
             std::string currentMotif = prefix + extension.getRepresentation();
             iteratorCount++;
-            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
+            // if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             if(bls.greaterThanMinThreshold(occurence)) {
 
                if((unsigned char) currentMotif.length() >= l.first) { // print motif if correct length!
@@ -601,7 +601,7 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
         // std::cerr << "pos: " << pos << " -> occ: " << +motifOcc << " rvOcc: " << +rcOcc << std::endl;
         if(__builtin_popcountll(motifOcc) > 1) {
             iteratorCount++;
-            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
+            // if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             float score = bls.getBLSScore(motifOcc);
             if(score > maxBls) {
                 maxBls = score;
@@ -610,7 +610,7 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
         }
         if(__builtin_popcountll(rcOcc) > 1) {
             iteratorCount++;
-            if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
+            // if(iteratorCount % 1000000 == 0) std::cerr << "\33[2K\r" << iteratorCount / 1000000 << " M motifs iterated" << std::flush;
             float score = bls.getBLSScore(rcOcc);
             if(score > maxBls) {
                 maxBls = score;

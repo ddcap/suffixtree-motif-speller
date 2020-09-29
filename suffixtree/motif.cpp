@@ -239,7 +239,7 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
 }
 
 
-const std::vector<float> BLSScore::blsThresholds ({ 0.15, 0.5, 0.6, 0.7, 0.9, 0.95});
+// const std::vector<float> BLSScore::blsThresholds ({ 0.15, 0.5, 0.6, 0.7, 0.9, 0.95});
 
 float BLSScore::calculateBLSScore(const occurence_bits& occurence) const {
     return root->getChild()->getScore(occurence); // root has no next but only children! so first branch is of length 0 with 11111 so always true!
