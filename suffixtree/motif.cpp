@@ -64,38 +64,28 @@ void Motif::writeMotifInBinary(const std::string& motif, const short &maxlen, st
     }
 }
 
-void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out) {
+void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out) {
     char size = motif.length(); // assumes length isnt more than 255 chars
     // write size
     out.write(&size, 1);
-    char numberOfBytes = size / 2;
+    char numberOfBytes = maxlen >> 1; // works since this maxlen is non inclusive (< instead of <=)
 
     //write Motif
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
-        toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
+        if(i*2 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+        if(i*2 + 1 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
         out.write(&toWrite, 1);
     }
-    if(size % 2 == 1) {
-        // write the last char
-        char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[motif[size-1]].getMask();
-        out.write(&toWrite, 1);
-    }
-
-    // write groupId
     std::string groupId = getGroupID(motif);
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
-        toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask() << 4;
-        out.write(&toWrite, 1);
-    }
-    if(size % 2 == 1) {
-        // write the last char
-        char toWrite = 0;
-        toWrite |= IupacMask::characterToMask[groupId[size-1]].getMask();
+        if(i*2 < size)
+            toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
+        if(i*2 + 1 < size)
+            toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask() << 4;
         out.write(&toWrite, 1);
     }
 }

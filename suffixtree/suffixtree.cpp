@@ -456,8 +456,8 @@ void SuffixTree::printMotifString(const short& maxlen, const std::string& curren
 void SuffixTree::printMotifBinary(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
     // std::cerr << "nodes that match " << currentMotif << ":  with occ " << +occurence << " and blsScore: " << bls.getBLSScore(occurence) << std::endl;
     if(Motif::isRepresentative(currentMotif)) {
-        Motif::writeMotifInBinary(currentMotif, maxlen, out);
-        // Motif::writeGroupIDAndMotifInBinary(currentMotif, out);
+        // Motif::writeMotifInBinary(currentMotif, maxlen, out);
+        Motif::writeGroupIDAndMotifInBinary(currentMotif, maxlen, out);
         bls.writeBLSVectorInBinary(occurence, out);
         motifCount++;
     }

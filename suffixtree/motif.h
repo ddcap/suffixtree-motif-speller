@@ -58,9 +58,9 @@ public:
     static bool isRepresentative(const std::string& read);
     static bool isGroupRepresentative(const std::string& read);
     static std::string getRepresentative(const std::string& read);
-    static void writeGroupIDAndMotifInBinary(const std::string& motif, std::ostream& out);
-    static void writeGroupIDAndMotif(const std::string& motif, std::ostream& out);
+    static void writeGroupIDAndMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out);
     static void writeMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out);
+    static void writeGroupIDAndMotif(const std::string& motif, std::ostream& out);
     static void writeMotif(const std::string& motif, std::ostream& out);
 };
 
