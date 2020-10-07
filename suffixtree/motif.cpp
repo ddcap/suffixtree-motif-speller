@@ -70,15 +70,6 @@ void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, const short &
     out.write(&size, 1);
     char numberOfBytes = maxlen >> 1; // works since this maxlen is non inclusive (< instead of <=)
 
-    //write Motif
-    for(int i = 0; i < numberOfBytes; i++) {
-        char toWrite = 0;
-        if(i*2 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
-        if(i*2 + 1 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
-        out.write(&toWrite, 1);
-    }
     std::string groupId = getGroupID(motif);
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
@@ -86,6 +77,15 @@ void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, const short &
             toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
         if(i*2 + 1 < size)
             toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask() << 4;
+        out.write(&toWrite, 1);
+    }
+    //write Motif
+    for(int i = 0; i < numberOfBytes; i++) {
+        char toWrite = 0;
+        if(i*2 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+        if(i*2 + 1 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
         out.write(&toWrite, 1);
     }
 }
