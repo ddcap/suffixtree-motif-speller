@@ -10,7 +10,7 @@
 #include "newick.h"
 
 void Orthology::formatGeneList(std::ostream& o, Genes *genemap, Newick *newick, std::string cluster, std::string genelist) {
-    std::cerr << "cluster " << cluster << std::endl;
+    // std::cerr << "cluster " << cluster << std::endl;
     o << cluster << '\n';
     std::unordered_map<std::string, std::string> species_to_genes_map;
     std::unordered_map<std::string, std::string> species_to_geneids_map;
@@ -71,6 +71,7 @@ void Orthology::readOrthology(Genes *genemap, Newick *newick, std::string orthol
                     genes = line.substr(splitpos2+1);
                     // create ofstream o
                     std::ofstream o;
+                    std::cerr << "writing " + outputfolder + "/" + cluster << std::endl;
                     o.open(outputfolder + "/" + cluster);
                     formatGeneList(o, genemap, newick, cluster, genes);
                     o.close();
