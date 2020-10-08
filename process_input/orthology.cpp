@@ -48,6 +48,7 @@ void Orthology::formatGeneList(std::ostream& o, Genes *genemap, Newick *newick, 
 }
 void Orthology::readOrthology(Genes *genemap, Newick *newick, std::string orthologyFile, std::string outputfolder) {
 
+    int minimimum_species_count = 3;
     std::ifstream f(orthologyFile);
     std::string line, cluster, genes;
     int species_count; // , gene_count;
@@ -65,7 +66,7 @@ void Orthology::readOrthology(Genes *genemap, Newick *newick, std::string orthol
                 splitpos1 = splitpos2;
                 splitpos2 = line.find('\t', splitpos1+1);
                 species_count = std::stoi(line.substr(splitpos1+1, splitpos2));
-                if(species_count > 1) {
+                if(species_count >= minimimum_species_count) {
                     count++;
                     genes = line.substr(splitpos2+1);
                     // create ofstream o
@@ -78,5 +79,5 @@ void Orthology::readOrthology(Genes *genemap, Newick *newick, std::string orthol
         }
     }
     f.close();
-    std::cerr << "found " << count << " clusters with more than 1 species" << std::endl;
+    std::cerr << "found " << count << " clusters with at least " << minimimum_species_count << " species" << std::endl;
 }

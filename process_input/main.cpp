@@ -28,7 +28,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     if(argc != 4) {
-        std::cerr << "usage: ./prepInput [folder of fasta files] [orthology file] [newick lengths file] [outputfolder]" << std::endl;
+        std::cerr << "usage: ./prepInput [folder of fasta files] [orthology file] [newick file] [outputfolder]" << std::endl;
         std::cerr << argv[0] << std::endl;
     }
 

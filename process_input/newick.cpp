@@ -40,55 +40,95 @@ void Newick::remove_newick_nodes() {
             delete node;
     }
 }
-void Newick::prep_newick(std::string lengthsfile) {
-    std::ifstream f(lengthsfile);
+
+newick_node* Newick::get_first_child(std::string &newick_string, int level) {
+    size_t name_end = newick_string.find(':');
+    std::string name = newick_string.substr(0, name_end);
+    if(name.compare(";") == 0) name = "";
+    newick_string.erase(0, name_end + 1);
+    float length = 0.0f;
+    // next is either a ',' or a ')'
+    size_t length_end = 0;
+    size_t firstcomma = newick_string.find(',');
+    size_t firstbracket = newick_string.find(')');
+    if(firstcomma == std::string::npos) length_end = firstbracket;
+    else if(firstcomma == std::string::npos) length_end = firstcomma;
+    else length_end = std::min(firstbracket, firstcomma);
+    if(length_end != std::string::npos) length = std::stof(newick_string.substr(0, length_end)); // can still be npos at the end, the length should be 0!
+    newick_string.erase(0, length_end);
+    return new newick_node(name, length, level);
+}
+newick_node* Newick::build_newick_recursive(std::string &newick_string, int level) {
+    // std::cerr << "l[" << level << "] new branch: " << newick_string << std::endl;
+    newick_node * firstchild = NULL;
+    if(newick_string[0] == '(') newick_string.erase(0, 1);
+    // if(newick_string[0] == '(') {
+    //     newick_string.erase(0, 1);
+    //     firstchild = build_newick_recursive(newick_string, level + 1);
+    // } else {
+        if(newick_string[0] == '(')
+            firstchild = build_newick_recursive(newick_string, level + 1);
+        else
+            firstchild = get_first_child(newick_string, level + 1);
+        // std::cerr << "l[" << level << "] 1member of branch:\n" << *firstchild << std::endl;
+        // std::cerr << "l[" << level << "] string: " << newick_string << std::endl;
+        newick_node *child = firstchild;
+        newick_node *next = NULL;
+        while(newick_string[0] == ',') {
+            newick_string.erase(0, 1);
+            if(newick_string[0] == '(')
+                next = build_newick_recursive(newick_string, level + 1);
+            else
+                next = get_first_child(newick_string, level + 1);
+            // std::cerr << "l[" << level << "] 2member of branch:\n" << *next << std::endl;
+            // std::cerr << "l[" << level << "] string: " << newick_string << std::endl;
+            child = child->setNext(next);
+        }
+    // }
+    // std::cerr << "l[" << level << "] children processed! " << newick_string << std::endl;
+    // next should be a ')'
+    if(newick_string[0] != ')') {
+        std::cerr << "after child should be ) [" + newick_string + "]" << std::endl;
+        throw "after child should be ) [" + newick_string + "]";
+    } else {
+        newick_string.erase(0, 1);
+        newick_node *parent = get_first_child(newick_string, level);
+        // std::cerr << "l[" << level << "] current branch node:\n" << *parent << std::endl;
+        // std::cerr << "updating child parent " << *firstchild << std::endl;
+        parent->setChild(firstchild);
+        firstchild->setParent(parent);
+        while(firstchild->getNext() != NULL) {
+            firstchild = firstchild->getNext();
+            // std::cerr << "updating child parent " << *firstchild << std::endl;
+            firstchild->setParent(parent);
+        }
+        // update children with parent node and level!
+        // std::cerr << "l[" << level << "] current branch node:\n" << *parent << std::endl;
+        return parent;
+    }
+}
+void Newick::prep_newick(std::string newickfile) {
+    std::ifstream f(newickfile);
     std::string line;
     if (f.is_open()) {
-        while ( getline (f, line) )  {
+        while ( root == NULL && getline (f, line) )  {
             if(!line.empty() && line[0] != '#' ) {
-                int splitpos = line.find_first_of(delim);
-                std::string name = line.substr(0, splitpos);
-                int len = std::stoi(line.substr(splitpos));
-                sum += len;
-                lengths[name] = len;
+                try{
+                    root = build_newick_recursive(line, 0);
+                } catch (const char* msg) {
+                    std::cerr << "[ERROR] " << msg << std::endl;
+                }
             }
         }
         f.close();
     }
-    // create the tree structure, this is fixed! but lengths can differ!
-    root = new newick_node("poaceae");
-    newick_node* BOP_clade = root->addChild("BOP_clade", lengths["BOP_clade"]/sum);
-    newick_node* oryza = BOP_clade->addChild("oryza", lengths["oryza"]/sum);
-    newick_node* oryzasativa = oryza->addChild("oryzasativa", lengths["oryzasativa"]/sum);
-    newick_node* osa = oryzasativa->addChild("osa", lengths["osa"]/sum);
-    osa->addNext("osaindica", lengths["osaindica"]/sum, oryzasativa);
-    oryzasativa->addNext("obr", lengths["obr"]/sum, oryza);
-    newick_node* pooideae_and_ped = oryza->addNext("pooideae_and_ped", lengths["pooideae_and_ped"]/sum, BOP_clade);
-    newick_node* pooideae = pooideae_and_ped->addChild("pooideae", lengths["pooideae"]/sum);
-    pooideae->addNext("ped", lengths["ped"]/sum, pooideae_and_ped);
-    newick_node* triticeae = pooideae->addChild("triticeae", lengths["triticeae"]/sum);
-    triticeae->addNext("bdi", lengths["bdi"]/sum, triticeae);
-    newick_node* tricium = triticeae->addChild("tricium", lengths["tricium"]/sum);
-    tricium->addNext("hvu", lengths["hvu"]/sum, pooideae);
-    newick_node* ttu = tricium->addChild("ttu", lengths["ttu"]/sum);
-    ttu->addNext("tae", lengths["tae"]/sum, tricium);
-
-    newick_node* PACMAD_clade = BOP_clade->addNext("PACMAD_clade", lengths["PACMAD_clade"]/sum, root);
-    newick_node* chloridoideae = PACMAD_clade->addChild("chloridoideae", lengths["chloridoideae"]/sum);
-    newick_node* oth = chloridoideae->addChild("oth", lengths["oth"]/sum);
-    oth->addNext("zjn", lengths["zjn"]/sum, chloridoideae);
-    newick_node* panicoideae = chloridoideae->addNext("panicoideae", lengths["panicoideae"]/sum, PACMAD_clade);
-    newick_node* paniceae = panicoideae->addChild("paniceae", lengths["paniceae"]/sum);
-    newick_node* sit = paniceae->addChild("sit", lengths["sit"]/sum);
-    sit->addNext("cam", lengths["cam"]/sum, paniceae);
-    newick_node* andropogoneae = paniceae->addNext("andropogoneae", lengths["andropogoneae"]/sum, panicoideae);
-    newick_node* ssp = andropogoneae->addChild("ssp", lengths["ssp"]/sum);
-    newick_node* zeamays = ssp->addNext("zeamays", lengths["zeamays"]/sum, andropogoneae);
-    zeamays->addNext("sbi", lengths["sbi"]/sum, andropogoneae);
-    newick_node* zma = zeamays->addChild("zma", lengths["zma"]/sum);
-    zma->addNext("zma-ph207", lengths["zma-ph207"]/sum, zeamays);
-
     // std::cerr << "tree: \n" << *root << std::endl;
+    // std::vector<std::string> keys = {
+    //     "zma", "zma-ph207", "bdi", "cam",
+    //     "hvu", "obr", "osa", "osaindica",
+    //     "oth", "ped", "sbi", "sit",
+    //     "ssp", "tae", "ttu", "zjn"};
+    // print_renormalised_tree(std::cerr, keys);
     // std::cerr << "newick: ";
     // root->print_newick(std::cerr);
     // std::cerr << std::endl;

@@ -82,8 +82,6 @@ private:
         }
         return o;
     }
-    newick_node(std::string name_, float length_, int level_, newick_node *parent_) : name(name_), length(length_), level(level_), used(true), parent(parent_), next(NULL), child(NULL) {
-    }
     newick_node *recFindSpecies(std::string x) {
         if(x.compare(name) == 0)
             return this;
@@ -100,10 +98,16 @@ private:
         }
     }
 public:
+    newick_node(std::string name_, float length_, int level_, newick_node *parent_) : name(name_), length(length_), level(level_), used(true), parent(parent_), next(NULL), child(NULL) {
+    }
+    newick_node(std::string name_, float length_, int level_) : name(name_), length(length_), level(level_), used(true), parent(NULL), next(NULL), child(NULL) {
+    }
     newick_node(std::string name_) : name(name_), length(0), level(0), used(false), parent(NULL), next(NULL), child(NULL) {
     }
     newick_node *addNext(std::string name_, float length_, newick_node *parent_) { next = new newick_node(name_, length_, level, parent_); return next;}
+    newick_node *setNext(newick_node *next_) { next = next_; return next;}
     newick_node *addChild(std::string name_, float length_) { child = new newick_node(name_, length_, level + 1, this); return child; }
+    newick_node *setChild(newick_node *child_) { child = child_; return child; }
     newick_node *getChild() const { return child; }
     newick_node *getNext() const { return next; }
     bool useSpecies(std::string x) {
@@ -155,6 +159,7 @@ public:
         if(next != NULL) next->resetUsed();
     }
     newick_node *getParent() const { return parent; }
+    newick_node *setParent(newick_node *parent_) { parent = parent_; return parent; }
     float get_length_sum() {
         float sum = 0.0f;
         if(used) sum += length;
@@ -186,13 +191,15 @@ private:
   float sum; // this should be adapted to the sum required to connect all branches that are present...
   std::unordered_map<std::string, int> lengths;
   char delim = '\t';
-  newick_node* root;
+  newick_node* root = NULL;
 
-  void prep_newick(std::string lengthsfile);
+  newick_node *build_newick_recursive(std::string &newick_string, int level);
+  newick_node *get_first_child(std::string &newick_string, int level);
+  void prep_newick(std::string newickfile);
   void remove_newick_nodes();
 public:
-    Newick(std::string lengthsfile) : sum(0){
-        prep_newick(lengthsfile);
+    Newick(std::string newickfile) : sum(0){
+        prep_newick(newickfile);
     }
     ~Newick() {
         remove_newick_nodes();
