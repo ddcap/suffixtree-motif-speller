@@ -1,6 +1,6 @@
 cmd: make
 
-cwd: /home/ddecap/source/suffixtree_motif_speller/suffixtree/build
+cwd: /home/ddecap/source/suffixtree_motif_speller/motifIterator/build
 
 name: "suffixtree"
 

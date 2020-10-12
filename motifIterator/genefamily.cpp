@@ -6,6 +6,8 @@
 
 std::chrono::time_point<std::chrono::system_clock> prevTime;
 
+const std::unordered_set<char> GeneFamily::validCharacters ({ 'A', 'C', 'G', 'T', 'N' });
+
 void startChrono()
 {
         prevTime = std::chrono::system_clock::now();
@@ -44,8 +46,12 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
         std::for_each(line.begin(), line.end(), [](char & c) { // convert all to upper case!
             if(c == IupacMask::FILLER)
                 c = IupacMask::DELIMITER;
-            else
+            else {
                 c = ::toupper(c);
+                if (validCharacters.find(c) == validCharacters.end()) {
+                    c = IupacMask::MASK;
+                }
+            }
         });
         T.append(line);
         T.push_back(IupacMask::DELIMITER);
@@ -56,7 +62,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
     }
     T.push_back(IupacMask::DELIMITER);
 
-    // std::cerr << "T: " << T << std::endl;
+    std::cerr << "T: " << T.length() << std::endl;
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();

@@ -9,8 +9,11 @@
 #include "suffixtree.h"
 
 
+#define MAX_VALID_CHARS 5
 class GeneFamily {
 private:
+
+    static const std::unordered_set<char> validCharacters;
 
 public:
   static void readOrthologousFamily(const std::string& filename, std::vector<float> blsThresholds_, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration);

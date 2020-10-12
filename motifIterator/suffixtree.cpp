@@ -375,7 +375,7 @@ void SuffixTree::constructUkonen()
 
         // algorithm invariant: pos points to T[i:j-1[
         STPosition pos(root);
-        unsigned char currentleafbit = 0; // supports up to 255 strings!
+        unsigned char currentleafbit = 0; // supports up to 255 species!
         int currentNumLeavesStart = 1;
 
         // in phase j, build implicit suffix tree for prefix T[0:j[
@@ -387,7 +387,8 @@ void SuffixTree::constructUkonen()
                 unsigned char currentbit = currentleafbit;
                 int currentIStart = currentNumLeavesStart;
                 for (size_t i = numLeaves; i < j; i++) {
-                        // std::cout << "current i " << i << " is at " << T[i] << std::endl;
+                        // std::cerr << "current substr " << i << ", " << j << " is " << T.substr(i, j-i) << std::endl;
+                        // if(STNode::charToIndex[static_cast<unsigned char>(T[i])] < 0) std::cerr <<"invalid char " << T[i] << std::endl;
                         // note that pos will always point to T[i:j-1[ at this point
                         // if t[i] == # then set bit of currentbit + increment currentbit
                         // add bit to existing nodes

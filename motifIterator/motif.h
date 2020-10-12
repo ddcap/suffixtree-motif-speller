@@ -180,6 +180,7 @@ private:
 
 public:
     static const char FILLER = '-';
+    static const char MASK = 'N';
     static const char DELIMITER = '$';
     static const std::vector<IupacMask> characterToMask;
     IupacMask() : mask(0) {}
