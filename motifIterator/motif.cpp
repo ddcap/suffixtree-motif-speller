@@ -284,6 +284,13 @@ bool BLSScore::greaterThanMinThreshold(const occurence_bits& occurence) const {
 }
 
 // IUPACMASK
+char IupacMask::getRandomChar(char c) {
+    const std::string *iupac_character_list = characterToMask[c].getCharacters();
+    char new_c = iupac_character_list->at(rand() % iupac_character_list->size());
+    std::cerr << "replaced " << c << " with " << new_c << std::endl;
+    return new_c;
+}
+
 const std::string* IupacMask::getCharacters() const {
     return &characterLists[mask];
 }

@@ -180,7 +180,6 @@ private:
 
 public:
     static const char FILLER = '-';
-    static const char MASK = 'N';
     static const char DELIMITER = '$';
     static const std::vector<IupacMask> characterToMask;
     IupacMask() : mask(0) {}
@@ -191,6 +190,8 @@ public:
     bool isDegenerate() {
         return __builtin_popcountll(mask) > 1; // relies on the gcc builtin popcount
     }
+
+    static char getRandomChar(char c);
 
     const std::string* getCharacters() const;
 

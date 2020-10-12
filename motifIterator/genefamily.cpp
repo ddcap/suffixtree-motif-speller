@@ -6,7 +6,7 @@
 
 std::chrono::time_point<std::chrono::system_clock> prevTime;
 
-const std::unordered_set<char> GeneFamily::validCharacters ({ 'A', 'C', 'G', 'T', 'N' });
+const std::unordered_set<char> GeneFamily::validCharacters ({ 'A', 'C', 'G', 'T', 'N', ' ', '$'  });
 
 void startChrono()
 {
@@ -49,7 +49,7 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
             else {
                 c = ::toupper(c);
                 if (validCharacters.find(c) == validCharacters.end()) {
-                    c = IupacMask::MASK;
+                    c = IupacMask::getRandomChar(c);
                 }
             }
         });
