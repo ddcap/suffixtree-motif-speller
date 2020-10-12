@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <list>
 #include <stack>
+#include <vector>
 
 struct Gene {
   std::string species;
@@ -42,7 +43,12 @@ namespace std {
 
 class Genes {
 private:
+  static const std::vector<std::string> characterToMask;
+  static const std::unordered_set<char> validCharacters;
   std::unordered_map<std::string, Gene> genemap;
+
+  static void fixSequence(std::string &seq);
+  static char getRandomCharFromIupac(char c);
   void readFastas(std::string directory);
   void readFasta(std::string species, std::string fasta);
 public:

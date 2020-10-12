@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 #include "genes.h"
 
 void Genes::readFastas(std::string directory) {
@@ -38,6 +39,30 @@ Gene *Genes::getGene(std::string geneid) {
         std::cerr << "geneid " << geneid << " not found in genemap" << std::endl;
     return NULL;
 }
+char Genes::getRandomCharFromIupac(char c) {
+    char new_c = characterToMask[c][rand() % characterToMask[c].size()];
+    // std::cerr << "replaced " << c << " with " << new_c << std::endl;
+    return new_c;
+}
+void Genes::fixSequence(std::string &seq) {
+    std::for_each(seq.begin(), seq.end(), [](char & c) { // convert all to upper case!
+        c = ::toupper(c);
+        if (validCharacters.find(c) == validCharacters.end()) {
+            c = getRandomCharFromIupac(c);
+        }
+    });
+}
+
+
+const std::unordered_set<char> Genes::validCharacters ({ 'A', 'C', 'G', 'T', 'N'  });
+const std::vector<std::string> Genes::characterToMask ({
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", // 0
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", // 16
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", // 32
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", // 48
+    "", "A", "CGT", "C", "AGT", "", "", "G", "ACT", "", "", "GT", "", "AC", "ACGT", "", // 64
+    "", "", "AG", "GC", "T", "", "ACG", "AT", "", "CT" // 80
+});
 void Genes::readFasta(std::string species, std::string fasta) {
     // read contents of fasta and add to the map
 
@@ -50,6 +75,7 @@ void Genes::readFasta(std::string species, std::string fasta) {
                 parsedid = id.substr(1, id.find_first_of(':') - 1);
                 if(getline(f, seq)) {
                     if(!seq.empty()) {
+                        fixSequence(seq);
                         genemap[parsedid] = {species, seq};
                     } else {
                         std::cerr << "empty seq line..." << std::endl;
