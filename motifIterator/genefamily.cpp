@@ -48,9 +48,10 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
                 c = IupacMask::DELIMITER;
             else {
                 c = ::toupper(c);
-                if (validCharacters.find(c) == validCharacters.end()) {
-                    c = IupacMask::getRandomChar(c);
-                }
+                // should already be fixed in the preprocessing tool!!!!
+                // if (validCharacters.find(c) == validCharacters.end()) {
+                    // c = IupacMask::getRandomChar(c);
+                // }
             }
         });
         T.append(line);
