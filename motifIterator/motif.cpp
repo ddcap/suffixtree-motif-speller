@@ -36,9 +36,13 @@ bool Motif::isRepresentative(const std::string& read) {
     return i== read.length() || read[i] < complement[read[read.length() - 1 - i]];
 }
 bool Motif::isGroupRepresentative(const std::string& read) {
-    std::string rc = ReverseComplement(read);
-    std::sort(rc.begin(), rc.end());
-    return read <= rc;
+    std::string group = getGroupID(read);
+    size_t i = 0;
+    while (i < group.length() && group[i] == complement[group[group.length() - 1 - i]]) {
+        i++;
+    }
+    // if the same, ie i == read.length -> RC wont be matched in the tree since it is the same!!1 so no need to save them to check if it already has passed in the motifs.
+    return i== group.length() || group[i] < complement[group[group.length() - 1 - i]];
 }
 
 void Motif::writeMotif(const std::string& motif, std::ostream& out) {

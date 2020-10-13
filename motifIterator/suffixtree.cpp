@@ -445,9 +445,9 @@ void SuffixTree::constructUkonen()
 // Routines to explore SuffixTree
 void SuffixTree::printMotifString(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
     // std::cerr << "nodes that match " << currentMotif << ":  with occ " << +occurence << " and blsScore: " << bls.getBLSScore(occurence) << std::endl;
-    if(Motif::isRepresentative(currentMotif)) {
-        Motif::writeMotif(currentMotif, out);
-        // Motif::writeGroupIDAndMotif(currentMotif, out);
+    if(Motif::isGroupRepresentative(currentMotif)) {
+        // Motif::writeMotif(currentMotif, out);
+        Motif::writeGroupIDAndMotif(currentMotif, out);
         out << "\t";
         bls.writeBLSVector(occurence, out);
         out << '\n'; // std::endl has a flushline which destroys performance.
@@ -456,7 +456,7 @@ void SuffixTree::printMotifString(const short& maxlen, const std::string& curren
 }
 void SuffixTree::printMotifBinary(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out) {
     // std::cerr << "nodes that match " << currentMotif << ":  with occ " << +occurence << " and blsScore: " << bls.getBLSScore(occurence) << std::endl;
-    if(Motif::isRepresentative(currentMotif)) {
+    if(Motif::isGroupRepresentative(currentMotif)) {
         // Motif::writeMotifInBinary(currentMotif, maxlen, out);
         Motif::writeGroupIDAndMotifInBinary(currentMotif, maxlen, out);
         bls.writeBLSVectorInBinary(occurence, out);
