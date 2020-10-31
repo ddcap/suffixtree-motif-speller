@@ -61,9 +61,9 @@ void Motif::writeMotifInBinary(const std::string& motif, const short &maxlen, st
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
         if(i*2 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask() << 4;
         if(i*2 + 1 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask(); // << 4; // makes more sense if we combine it into a long later
         out.write(&toWrite, 1);
     }
 }
@@ -78,18 +78,18 @@ void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, const short &
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
         if(i*2 < size)
-            toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask();
+            toWrite |= IupacMask::characterToMask[groupId[i*2]].getMask() << 4;
         if(i*2 + 1 < size)
-            toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask() << 4;
+            toWrite |= IupacMask::characterToMask[groupId[i*2+1]].getMask(); // << 4;
         out.write(&toWrite, 1);
     }
     //write Motif
     for(int i = 0; i < numberOfBytes; i++) {
         char toWrite = 0;
         if(i*2 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask();
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask() << 4;
         if(i*2 + 1 < size)
-            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask() << 4;
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask(); // << 4;
         out.write(&toWrite, 1);
     }
 }

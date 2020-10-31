@@ -39,6 +39,12 @@ typedef std::tuple<size_t, size_t, size_t> MEMOcc;
 
 enum Alphabet { EXACT = 0x0, EXACTANDN = 0x1, TWOFOLDSANDN = 0x2, ALL = 0x3 };
 
+struct MotifPosition {
+  int family;
+  int gene;
+  int reverseComplement;
+  int position;
+};
 
 #define MAX_ASCII_CHAR 85
 #define MAX_CHAR 7
@@ -566,13 +572,10 @@ public:
          * @param occ Start positions of the occurrences in T (output)
          */
         void matchPattern(const std::string& P, std::vector<size_t>& occ);
-        std::vector<STPosition> matchIupacPattern(const std::string& P, int maxDegenerateLetters, occurence_bits& occurence);
+        std::vector<std::pair<int, int>> matchIupacPattern(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
         std::vector<std::pair<int, int>> matchIupacPatternWithPositions(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
         void matchPattern(const std::string& P, BLSScore& bls);
-        std::string printPosPair(std::pair<int, int> p, size_t length) {
-              size_t pos = stringStartPositions[p.first] + p.second;
-              return T.substr(pos, length);
-        }
+        void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, size_t length);
         size_t getMotifsIteratedCount() { return iteratorCount; }
 
 

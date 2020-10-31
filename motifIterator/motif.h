@@ -10,8 +10,8 @@
 #include <bits/stdc++.h>
 
 
-#define N_BITS 8 // must be at least the maximum number of organisms
-typedef unsigned short int occurence_bits; // define type here to easily expand number of bits in code!
+#define N_BITS 16 // must be at least the maximum number of organisms
+typedef unsigned int occurence_bits; // define type here to easily expand number of bits in code!
 
 
 enum IUPAC {

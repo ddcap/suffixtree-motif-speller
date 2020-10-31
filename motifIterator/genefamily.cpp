@@ -19,12 +19,12 @@ double stopChrono()
         return (elapsed.count());
 }
 
-void GeneFamily::readOrthologousFamily(const std::string& filename, std::vector<float> blsThresholds_, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(const int mode, const std::string& filename, std::vector<float> blsThresholds_, Alphabet alphabet, int type, std::pair<short, short> l, int maxDegeneration) {
     std::ifstream ifs(filename.c_str());
-    readOrthologousFamily(ifs, blsThresholds_, alphabet, typeIsAB, l, maxDegeneration);
+    readOrthologousFamily(mode, ifs, blsThresholds_, alphabet, type, l, maxDegeneration);
 }
 
-void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> blsThresholds_, Alphabet alphabet, bool typeIsAB, std::pair<short, short> l, int maxDegeneration) {
+void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, std::vector<float> blsThresholds_, Alphabet alphabet, int type, std::pair<short, short> l, int maxDegeneration) {
   int totalCount = 0;
   while (ifs) {
     std::vector<size_t> stringStartPositions;
@@ -33,8 +33,10 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
     std::string T, newick, line, name;
     int N;
     getline(ifs, line);
-    if(line.empty()) {continue;}
+    while(ifs && line.empty()) {getline(ifs, line);}
+    if(!ifs || line.empty()) {continue;}
     name = line;
+    std::cerr << "test [" << name << "] " << std::endl;
     getline(ifs, newick);
     getline(ifs, line);
     N = std::stoi(line);
@@ -71,26 +73,31 @@ void GeneFamily::readOrthologousFamily(std::istream& ifs, std::vector<float> bls
     // std::cout << T << std::flush;
     SuffixTree ST(T, true, stringStartPositions);
 
-// TEST WRONG MOTIFS...
-    // std::string testMotif = "SCGYCN";
-    // occurence_bits occurence;
-    // std::vector<std::pair<int, int>> testpos = ST.matchIupacPatternWithPositions(testMotif, bls, 3, occurence);
-    // std::cerr << "testing " << testMotif << " with best occurence: " << +occurence  << " and BLS: " << bls.getBLSScore(occurence) << std::endl;
-    // for (auto p: testpos) {
-        // std::cerr << "[" << p.first << ", " << p.second << "]: " << ST.printPosPair(p, testMotif.length()) << std::endl;
-    // }
-    // int count = 0;
+    if (mode == 1) {
+        getline(ifs, line);
+        // collect in a global list and sort it after and then get family/genes easy!
+        while (!line.empty() && line.compare("-") != 0 ) { // loop over motifs until empty line or line with - signaling the end
+            occurence_bits occurence;
 
+            std::vector<std::pair<int, int>> foundpos = (type == 0) ?
+                 ST.matchIupacPatternWithPositions(line, bls, maxDegeneration, occurence) :
+                 ST.matchIupacPattern(line, bls, maxDegeneration, occurence);
 
-// FINAL CODE
-    int count = ST.printMotifs(l, alphabet, maxDegeneration, bls, std::cout, typeIsAB);
-    size_t iteratorcount = ST.getMotifsIteratedCount();
+            std::cerr << "motif " << line << " with occurence: " << std::bitset<8>(occurence) << " and BLS: " << bls.getBLSScore(occurence) << std::endl;
+            ST.printMotifPositions(std::cout, line, foundpos, line.length());
+            getline(ifs, line);
+        }
+    } else if (mode == 0) {
+        int count = ST.printMotifs(l, alphabet, maxDegeneration, bls, std::cout, type == 0); // 0 == AB, 1 is AF
+        size_t iteratorcount = ST.getMotifsIteratedCount();
 
-    totalCount += count;
-    double elapsed = stopChrono();
-    std::cerr << "\33[2K\r[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
-    std::cerr << "[" << name << "] counted " << count << " valid motifs in " << elapsed << "s" << std::endl;
-
+        totalCount += count;
+        double elapsed = stopChrono();
+        std::cerr << "\33[2K\r[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
+        std::cerr << "[" << name << "] counted " << count << " valid motifs in " << elapsed << "s" << std::endl;
+    } else {
+        std::cerr << "wrong type given, please provide one of these: 'AB','AF' or '-'" << std::endl;
+    }
   }
-  std::cerr << "total motifs counted: " << totalCount << std::endl;
+  if (mode == 0) std::cerr << "total motifs counted: " << totalCount << std::endl;
 }

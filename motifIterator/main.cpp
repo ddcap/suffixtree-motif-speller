@@ -27,43 +27,82 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+        if (argc == 8) {
+            int mode = 0; // motif discovery
+            int type = -1; // error if not given properly!
+            if (strcmp(argv[2], "AB") == 0) { type = 0; std::cerr << "Alignment Based" << std::endl; };
+            if (strcmp(argv[2], "AF") == 0) { type = 1; std::cerr << "Alignment Free" << std::endl; };
+            // if (strcmp(argv[2], "-") == 0) { type = 2; std::cerr << "Find Motifs" << std::endl; };
+            Alphabet alphabet = (Alphabet)std::stoi(argv[3]);
+            std::vector<float> blsThresholds;
+            std::string s = argv[4];
+            std::string delimiter = ",";
 
-        if(argc < 7) {
-            std::cerr << "usage: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen" << std::endl;
+            size_t pos = 0;
+            std::string token;
+            std::cerr << "BLS thresholds: ";
+            while ((pos = s.find(delimiter)) != std::string::npos) {
+                token = s.substr(0, pos);
+                blsThresholds.push_back(std::stof(token));
+                std::cerr << token << ", ";
+                s.erase(0, pos + delimiter.length());
+            }
+            blsThresholds.push_back(std::stof(s));
+            std::cerr << s << std::endl;
+
+            int maxDegeneration = std::stoi(argv[5]);
+            std::pair<short, short> l(std::stoi(argv[6]), std::stoi(argv[7]));
+
+            if ((strcmp(argv[1], "-") == 0))
+                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
+            else
+                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
+        } else if (argc == 6) {
+            int mode = 1; // find motif location
+            int type = -1; // error if not given properly!
+            if (strcmp(argv[2], "AB") == 0) { type = 0; std::cerr << "Alignment Based" << std::endl; };
+            if (strcmp(argv[2], "AF") == 0) { type = 1; std::cerr << "Alignment Free" << std::endl; };
+            Alphabet alphabet = (Alphabet)std::stoi(argv[3]);
+            std::vector<float> blsThresholds;
+            std::string s = argv[4];
+            std::string delimiter = ",";
+
+            size_t pos = 0;
+            std::string token;
+            std::cerr << "BLS thresholds: ";
+            while ((pos = s.find(delimiter)) != std::string::npos) {
+                token = s.substr(0, pos);
+                blsThresholds.push_back(std::stof(token));
+                std::cerr << token << ", ";
+                s.erase(0, pos + delimiter.length());
+            }
+            blsThresholds.push_back(std::stof(s));
+            std::cerr << s << std::endl;
+
+            int maxDegeneration = std::stoi(argv[5]);
+            std::pair<short, short> l(-1, -1);
+
+            if ((strcmp(argv[1], "-") == 0))
+                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
+            else
+                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
+        } else {
+            std::cerr << "usage: " << std::endl;
+            std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen" << std::endl;
             std::cerr << "\tinput:\tInput file or '-' for stdin." << std::endl;
-            std::cerr << "\ttype:\tAB or AF" << std::endl;
+            std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
             std::cerr << "\talphabet (int):\t0: Exact, 1: Exact And N, 2: Exact, Twofolds And N, 3: All" << std::endl;
-            std::cerr << "\tblsThrehsoldList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;
+            std::cerr << "\tblsThresholdList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;
             std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
             std::cerr << "\tminlen:\tMinimum motif length, inclusive (i.e. length >= minlen)." << std::endl;
             std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
+            std::cerr << "FIND MOTIFS: ./motifIterator input alphabet blsThresholdList degeneration" << std::endl;
+            std::cerr << "\tinput:\tInput file or '-' for stdin." << std::endl;
+            std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
+            std::cerr << "\talphabet (int):\t0: Exact, 1: Exact And N, 2: Exact, Twofolds And N, 3: All" << std::endl;
+            std::cerr << "\tblsThresholdList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;
+            std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
             return EXIT_FAILURE;
         }
-        bool typeIsAB = (strcmp(argv[2], "AB") == 0);
-        std::cerr << (typeIsAB ? "Alignment Based" : "Alignment Free") << std::endl;
-        Alphabet alphabet = (Alphabet)std::stoi(argv[3]);
-        std::vector<float> blsThresholds;
-        std::string s = argv[4];
-        std::string delimiter = ",";
-
-        size_t pos = 0;
-        std::string token;
-        std::cerr << "BLS thresholds: ";
-        while ((pos = s.find(delimiter)) != std::string::npos) {
-            token = s.substr(0, pos);
-            blsThresholds.push_back(std::stof(token));
-            std::cerr << token << ", ";
-            s.erase(0, pos + delimiter.length());
-        }
-        blsThresholds.push_back(std::stof(s));
-        std::cerr << s << std::endl;
-
-        int maxDegeneration = std::stoi(argv[5]);
-        std::pair<short, short> l(std::stoi(argv[6]), std::stoi(argv[7]));
-
-        if ((strcmp(argv[1], "-") == 0))
-            GeneFamily::readOrthologousFamily(std::cin, blsThresholds, alphabet, typeIsAB, l, maxDegeneration);
-        else
-            GeneFamily::readOrthologousFamily(argv[1], blsThresholds, alphabet, typeIsAB, l, maxDegeneration);
         return EXIT_SUCCESS;
 }

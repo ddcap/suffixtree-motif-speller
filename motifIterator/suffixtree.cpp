@@ -863,6 +863,14 @@ void SuffixTree::matchPattern(const string& P, vector<size_t>& occ)
         // get all occurrences under position
         getOccurrences(pos.node, occ);
 }
+void SuffixTree::printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, size_t length) {
+    out << motif << std::endl;
+      for (auto p: positions) {
+          // size_t pos = stringStartPositions[p.first] + p.second;
+          MotifPosition mpos = {p.first >> 1, -1, p.first & 1, p.second};
+          out << "[" << mpos.family << "\t" << mpos.reverseComplement << "\t" << mpos.position << "] " << std::endl;
+      }
+}
 
 std::vector<std::pair<int, int>> SuffixTree::matchIupacPatternWithPositions(const string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence)
 {
@@ -873,11 +881,11 @@ std::vector<std::pair<int, int>> SuffixTree::matchIupacPatternWithPositions(cons
         while (!positions.list[i].empty() && i < P.size()) {
             // std::cerr << "valid pos: " << positions.list[i].validPositions << std::endl;
             advanceIupacCharacter(IupacMask::characterToMask[P[i]], i, positions, occurence);
-            // std::cerr << "matching " << P[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
-            // for(int j = 0; j < positions.list[i+1].validPositions; j++) {
-            //     std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
-            //     T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
-            // }
+            std::cerr << "matching " << P[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
+            for(size_t j = 0; j < positions.list[i+1].validPositions; j++) {
+                std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
+                T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
+            }
             i++;
         }
         std::vector<std::pair<int, int>> stringPositions;
@@ -887,13 +895,12 @@ std::vector<std::pair<int, int>> SuffixTree::matchIupacPatternWithPositions(cons
         // }
         getLeafPositions(stringPositions, positions.list[P.size()].list, positions.list[P.size()].validPositions);
         // getPositionsStartingWithFiller(stringPositions, positions.list[P.size()].list, positions.list[P.size()].validPositions);
-        getBestOccurence(stringPositions, bls, occurence);
+        getBestOccurence(stringPositions, bls, occurence); // best occurence according to the available positions
 
         return stringPositions;
 }
 
-
-std::vector<STPosition> SuffixTree::matchIupacPattern(const string& P, int maxDegenerateLetters, occurence_bits& occurence)
+std::vector<std::pair<int, int>> SuffixTree::matchIupacPattern(const string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence)
 {
         size_t i =0;
 
@@ -909,11 +916,9 @@ std::vector<STPosition> SuffixTree::matchIupacPattern(const string& P, int maxDe
             // }
             i++;
         }
-        std::vector<STPosition> pos;
-        for(size_t i = 0; i < positions.list[P.size()].validPositions; i++) {
-            pos.push_back(positions.list[P.size()].list[i]);
-        }
-        return pos;
+        std::vector<std::pair<int, int>> stringPositions;
+        getLeafPositions(stringPositions, positions.list[P.size()].list, positions.list[P.size()].validPositions);
+        return stringPositions;
 }
 
 
