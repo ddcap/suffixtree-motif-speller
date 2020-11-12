@@ -840,7 +840,6 @@ SuffixTree::~SuffixTree()
         // Depth-first traversal of the tree
         stack<STNode*> stack;
         stack.push(root);
-        int deletednodes = 0;
 
         while (!stack.empty()) {
                 STNode* node = stack.top();
