@@ -146,21 +146,22 @@ string SuffixTree::posToStr(const STPosition& pos) const
 
 void SuffixTree::getOccurrences(const STPosition& pos, vector<size_t>& occ) const
 {
-        // if so, find all the leaves under "pos"
-        stack<STNode*> stack;
-        stack.push(pos.node);
+    // if so, find all the leaves under "pos"
+    stack<STNode*> stack;
+    stack.push(pos.node);
 
-        while (!stack.empty()) {
-                STNode* node = stack.top();
-                stack.pop();
+    while (!stack.empty()) {
+        // std::cerr << "stack size " << stack.size() << std::endl;
+        STNode* node = stack.top();
+        stack.pop();
 
-                if (node->isLeaf())
-                        occ.push_back(node->getSuffixIdx());
-                else
-                        for (int i = 0; i < MAX_CHAR; i++)
-                                if (node->getChild(i) != NULL)
-                                        stack.push(node->getChild(i));
-        }
+        if (node->isLeaf())
+            occ.push_back(node->getSuffixIdx());
+        else
+            for (unsigned char i = 0; i < MAX_CHAR; i++)
+                if (node->getChildNumber(i) != NULL)
+                    stack.push(node->getChildNumber(i));
+    }
 }
 
 void SuffixTree::reportMEM(const string& Q, size_t j, size_t minSize,
@@ -225,7 +226,7 @@ void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex)
         node_count++;
         leaf->setSuffixIdx(suffixIndex);
         pos.node->setChild(T[suffixIndex + pos.getDepth()], leaf);
-        // std::cerr << "added new leaf:" << T.substr(suffixIndex + pos.getDepth()) << " ";
+        // std::cerr << "added new leaf:" << suffixIndex + pos.getDepth() << " ";
 }
 void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex, unsigned char currentbit)
 {
@@ -304,6 +305,7 @@ std::ostream& SuffixTree::write(std::ostream& o) const
         stack.push(make_pair(0, root));
 
         while (!stack.empty()) {
+            std::cerr << "stack size " << stack.size() << std::endl;
                 int depth = stack.top().first;
                 STNode* node = stack.top().second;
                 stack.pop();
@@ -325,9 +327,9 @@ std::ostream& SuffixTree::write(std::ostream& o) const
                 o << "\n";
 
                 for (int i = MAX_CHAR-1; i >= 0; i--) {
-                        char c = (char)i;
-                        if (node->getChild(c) != NULL)
-                                stack.push(make_pair(depth+1, node->getChild(c)));
+                        unsigned char c = (char)i;
+                        if (node->getChildNumber(c) != NULL)
+                            stack.push(make_pair(depth+1, node->getChildNumber(c)));
                 }
         }
 
@@ -620,6 +622,25 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
         }
     }
 }
+void SuffixTree::getLeafPositionsAndPrint(const std::vector<STPosition>& matchingNodes, const size_t size,
+std::ostream& out, const std::string &motif) const {
+    out << motif << '\t';
+    std::vector<size_t> occ;
+    for(size_t i = 0; i < size; i++) {
+        getOccurrences(matchingNodes[i], occ);
+    }
+    std::sort(occ.begin(), occ.end());
+    int stringId = 1;
+    size_t i = 0;
+    while(occ[i] >= stringStartPositions[stringId]) { stringId++;} // find the correct string id for this occurence
+    out << gene_names[stringId-1] << (((stringId - 1) & 1) ? "@-" : "@+") << occ[i] - stringStartPositions[stringId-1];
+    i++;
+    for (; i< occ.size(); i++) {
+        while(occ[i] >= stringStartPositions[stringId]) { stringId++;} // find the correct string id for this occurence
+        out << ';' << gene_names[stringId-1] << (((stringId - 1) & 1) ? "@-" : "@+")  << occ[i] - stringStartPositions[stringId-1];
+    }
+    out << '\n';
+}
 
 void SuffixTree::getLeafPositions(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& matchingNodes, const size_t size) const {
     std::vector<size_t> occ;
@@ -636,6 +657,21 @@ void SuffixTree::getLeafPositions(std::vector<std::pair<int, int>>& positions, c
         positions.push_back(std::pair<int, int>(stringId - 1, posInString));
     }
     // std::cerr << std::endl;
+}
+void SuffixTree::printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, const float blsScore) {
+    out << motif << "\t" << blsScore << '\t';
+    size_t i = 0;
+    if(positions.size() > 0) {
+        MotifPosition mpos = {positions[i].first >> 1, -1, positions[i].first & 1, positions[i].second};
+        out << mpos.family << "," << (mpos.reverseComplement ? "RC" : "FW") << "," << mpos.position;
+    }
+    i++;
+    for (; i< positions.size(); i++) {
+      // size_t pos = stringStartPositions[p.first] + p.second;
+      MotifPosition mpos = {positions[i].first >> 1, -1, positions[i].first & 1, positions[i].second};
+      out << ';' << mpos.family << "," << (mpos.reverseComplement ? "RC" : "FW") << "," << mpos.position;
+    }
+    out << '\n';
 }
 
 void SuffixTree::getPositionsStartingWithDelimiter(std::vector<std::pair<int, int>>& positions, const std::vector<STPosition>& matchingNodes, const size_t size) const {
@@ -673,10 +709,7 @@ void SuffixTree::advanceIupacCharacter(const IupacMask& mask, const int& charact
     const std::string* chars = mask.getCharacters();
     occurence = 0; // reset!
     positions.list[characterPos + 1].reset();
-    // std::cerr << "reset next letter list: " << positions.list[characterPos + 1].validPositions << std::endl;
-    // std::cerr << "current positions list: " << positions.list[characterPos].validPositions << std::endl;
     for(size_t i = 0; i < positions.list[characterPos].validPositions; i++) {
-    // for(STPosition p : currentPositions) {
         for(char c : *chars) { // these are the chars that belong to the iupac character extension!!
             if (positions.list[characterPos].list[i].atNode()) {
                 // if p extended the full branch then go to child node with char c
@@ -684,7 +717,6 @@ void SuffixTree::advanceIupacCharacter(const IupacMask& mask, const int& charact
                 if(child != NULL) {
                     positions.list[characterPos + 1].addSTPosition(child, 1);
                     occurence |= child->getOccurence();
-                    // std::cerr << "occ update " << +child->getOccurence() << " -> " << +occurence << std::endl;
                 }
             } else {
                 // case b) we are at an edge: try and match next character along edge
@@ -777,9 +809,10 @@ const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
 // ============================================================================
 
 
-SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_) :
-    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_)
+SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_) :
+    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_)
 {
+        // assert(gene_names.size() + 1== next_gene_locations.size()); // locations has an extra -> 0 pos
         // for (size_t i = 0 ; i < stringStartPositions.size() - 1; i++) {
             // std::cerr << T.substr(stringStartPositions[i] , (stringStartPositions[i+1] - stringStartPositions[i])) << std::endl;
         // }
@@ -790,6 +823,14 @@ SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<s
         // construct suffix tree using Ukonen's algorithm
         constructUkonen();
 
+        // check if gene positions are correct
+        // size_t start = 0, end = 0;
+        // for(size_t i = 0; i < next_gene_locations.size(); i++) {
+        //     end = next_gene_locations[i];
+        //     std::cout << gene_names[i] << " " << start << ", " << end << std::endl;
+        //     std::cout << "'" << T.substr(start, end - start) << "'" << std::endl;
+        //     start = end;
+        // }
 }
 
 
@@ -799,16 +840,18 @@ SuffixTree::~SuffixTree()
         // Depth-first traversal of the tree
         stack<STNode*> stack;
         stack.push(root);
+        int deletednodes = 0;
 
         while (!stack.empty()) {
                 STNode* node = stack.top();
                 stack.pop();
 
                 for (int i = 0; i < MAX_CHAR; i++)
-                        if (node->getChild(i) != NULL)
-                                stack.push(node->getChild(i));
+                        if (node->getChildNumber(i) != NULL)
+                                stack.push(node->getChildNumber(i));
 
                 delete node;
+                deletednodes++;
         }
 }
 
@@ -863,14 +906,6 @@ void SuffixTree::matchPattern(const string& P, vector<size_t>& occ)
         // get all occurrences under position
         getOccurrences(pos.node, occ);
 }
-void SuffixTree::printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, size_t length) {
-    out << motif << std::endl;
-      for (auto p: positions) {
-          // size_t pos = stringStartPositions[p.first] + p.second;
-          MotifPosition mpos = {p.first >> 1, -1, p.first & 1, p.second};
-          out << "[" << mpos.family << "\t" << mpos.reverseComplement << "\t" << mpos.position << "] " << std::endl;
-      }
-}
 
 std::vector<std::pair<int, int>> SuffixTree::matchIupacPatternWithPositions(const string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence)
 {
@@ -921,6 +956,74 @@ std::vector<std::pair<int, int>> SuffixTree::matchIupacPattern(const string& P, 
         return stringPositions;
 }
 
+
+int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen) {
+    std::string motif, lastmotif = "";
+    STPositionsPerLetter positions(maxlen, maxDegenerateLetters); // can be reused, if sorted order!
+    positions.list[0].addSTPosition(root);
+    size_t i =0;
+    occurence_bits occurence;
+
+    int count = 0;
+    std::getline(in, motif);
+    while (!motif.empty() && motif.compare("-") != 0 ) { // loop over motifs until empty line or line with - signaling the end
+        i = 0;
+        // check how much it matches with last motif
+        while(motif[i] == lastmotif[i] && i < min(lastmotif.size(), motif.size()) ) {
+            i++;
+        }
+        // std::cerr << "reusing " << i << " positions" << std::endl;
+        while (!positions.list[i].empty() && i < motif.size()) {
+            // std::cerr << "i: " << i << " valid pos: " << positions.list[i].validPositions << std::endl;
+            advanceIupacCharacter(IupacMask::characterToMask[motif[i]], i, positions, occurence);
+            // std::cerr << "matching " << motif[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
+            // for(int j = 0; j < positions.list[i+1].validPositions; j++) {
+                // std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
+                // T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
+            // }
+            i++;
+        }
+        if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanMinThreshold(occurence) ){
+            out << motif << "\t" << bls.getBLSScore(occurence) << '\n';
+        }
+        lastmotif = motif;
+        count++;
+        std::getline(in, motif);
+    }
+    return count;
+}
+int SuffixTree::locateIupacPatterns(std::vector<std::string> motifs, std::ostream& out, const int &maxDegenerateLetters, const short& maxlen) {
+    std::string motif, lastmotif = "";
+    STPositionsPerLetter positions(maxlen, maxDegenerateLetters); // can be reused, if sorted order!
+    positions.list[0].addSTPosition(root);
+    size_t i =0;
+    occurence_bits occurence;
+
+    int count = 0;
+    for(auto motif: motifs) {
+        i = 0;
+        // check how much it matches with last motif
+        while(motif[i] == lastmotif[i] && i < min(lastmotif.size(), motif.size()) ) {
+            i++;
+        }
+        // std::cerr << "reusing " << i << " positions" << std::endl;
+        while (!positions.list[i].empty() && i < motif.size()) {
+            // std::cerr << "i: " << i << " valid pos: " << positions.list[i].validPositions << std::endl;
+            advanceIupacCharacter(IupacMask::characterToMask[motif[i]], i, positions, occurence);
+            // std::cerr << "matching " << motif[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
+            // for(int j = 0; j < positions.list[i+1].validPositions; j++) {
+                // std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
+                // T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
+            // }
+            i++;
+        }
+        if(positions.list[motif.size()].validPositions > 0)
+            getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, std::cout, motif);
+        lastmotif = motif;
+        count++;
+    }
+    return count;
+}
 
 void SuffixTree::matchPattern(const string& P, BLSScore& bls)
 {

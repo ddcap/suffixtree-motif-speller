@@ -49,7 +49,7 @@ struct MotifPosition {
 #define MAX_ASCII_CHAR 85
 #define MAX_CHAR 7
 // #define MAX_CHAR 256
-// 7 characters in string -> acgt n $ and  space others will give index -1 in array which will crash the program.
+// 7 characters in string -> acgt n $ and ' '(space) others will give index -1 in array which will crash the program.
 
 // ============================================================================
 // CLASS SUFFIX TREE NODE
@@ -167,6 +167,9 @@ public:
         STNode* getChild(char c) const {
                 return child[charToIndex[static_cast<unsigned char>(c)]];
                 // return child[static_cast<unsigned char>(c)];
+        }
+        STNode* getChildNumber(unsigned char i) const {
+                return child[i];
         }
 
         /**
@@ -522,6 +525,8 @@ private:
         size_t iteratorCount;
         size_t node_count = 0;
         std::vector<size_t> stringStartPositions; // indicates where new strings start
+        // std::vector<size_t> next_gene_locations; // identify genes
+        std::vector<std::string> gene_names; // identify gene names
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
@@ -559,7 +564,8 @@ public:
          */
         // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
         // SuffixTree(const std::string& T, bool hasReverseComplement);
-        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_);
+        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_);
+        //, std::vector<size_t> next_gene_locations_
 
         /**
          * Destructor
@@ -574,8 +580,14 @@ public:
         void matchPattern(const std::string& P, std::vector<size_t>& occ);
         std::vector<std::pair<int, int>> matchIupacPattern(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
         std::vector<std::pair<int, int>> matchIupacPatternWithPositions(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
+
+        int matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen);
+        int locateIupacPatterns(std::vector<std::string> motifs, std::ostream& out, const int &maxDegenerateLetters, const short& maxlen);
+        // TODO add same but with positions
         void matchPattern(const std::string& P, BLSScore& bls);
-        void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, size_t length);
+        void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, const float blsScore);
+        void getLeafPositionsAndPrint(const std::vector<STPosition>& matchingNodes, const size_t size,
+          std::ostream& out, const std::string &motif) const;
         size_t getMotifsIteratedCount() { return iteratorCount; }
 
 

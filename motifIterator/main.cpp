@@ -62,9 +62,9 @@ int main(int argc, char* argv[])
             int type = -1; // error if not given properly!
             if (strcmp(argv[2], "AB") == 0) { type = 0; std::cerr << "Alignment Based" << std::endl; };
             if (strcmp(argv[2], "AF") == 0) { type = 1; std::cerr << "Alignment Free" << std::endl; };
-            Alphabet alphabet = (Alphabet)std::stoi(argv[3]);
+            Alphabet alphabet = (Alphabet)3;
             std::vector<float> blsThresholds;
-            std::string s = argv[4];
+            std::string s = argv[3];
             std::string delimiter = ",";
 
             size_t pos = 0;
@@ -79,13 +79,23 @@ int main(int argc, char* argv[])
             blsThresholds.push_back(std::stof(s));
             std::cerr << s << std::endl;
 
-            int maxDegeneration = std::stoi(argv[5]);
-            std::pair<short, short> l(-1, -1);
+            int maxDegeneration = std::stoi(argv[4]);
+            int maxLen = std::stoi(argv[5]);
+            std::pair<short, short> l(-1, maxLen);
 
             if ((strcmp(argv[1], "-") == 0))
                 GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
             else
                 GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
+        } else if (argc == 4) {
+            int maxDegeneration = std::stoi(argv[2]);
+            int maxLen = std::stoi(argv[3]);
+            if(strcmp(argv[1], "-") == 0)
+                GeneFamily::readGenes(std::cin, maxDegeneration, maxLen);
+            else {
+                std::ifstream ifs(argv[1]);
+                GeneFamily::readGenes(ifs, maxDegeneration, maxLen);
+            }
         } else {
             std::cerr << "usage: " << std::endl;
             std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen" << std::endl;
@@ -96,12 +106,16 @@ int main(int argc, char* argv[])
             std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
             std::cerr << "\tminlen:\tMinimum motif length, inclusive (i.e. length >= minlen)." << std::endl;
             std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
-            std::cerr << "FIND MOTIFS: ./motifIterator input alphabet blsThresholdList degeneration" << std::endl;
-            std::cerr << "\tinput:\tInput file or '-' for stdin." << std::endl;
+            std::cerr << "MATCH MOTIFS: ./motifIterator input type blsThresholdList degeneration maxlen" << std::endl;
+            std::cerr << "\tinput:\tInput file or '-' for stdin: ortho group file followed by a list of sorted motifs to find" << std::endl;
             std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
-            std::cerr << "\talphabet (int):\t0: Exact, 1: Exact And N, 2: Exact, Twofolds And N, 3: All" << std::endl;
             std::cerr << "\tblsThresholdList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;
             std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
+            std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
+            std::cerr << "FIND MOTIF LOCATIONS: ./motifIterator input degeneration maxlen" << std::endl;
+            std::cerr << "\tinput:\tInput file or '-' for stdin: sorted list of motifs, and a list of genes (fasta format) sepparated by one empty newline." << std::endl;
+            std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
+            std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
             return EXIT_FAILURE;
         }
         return EXIT_SUCCESS;

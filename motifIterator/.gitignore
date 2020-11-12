@@ -3,3 +3,7 @@ test/
 callgrind*
 analysis*
 cachegrind*
+massif*
+groupOrtho1With*
+find_motifs*
+wheat_cluster*

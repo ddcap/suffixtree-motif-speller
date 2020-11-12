@@ -16,9 +16,11 @@ private:
     static const std::unordered_set<char> validCharacters;
 
 public:
-  static void readOrthologousFamily(const int mode, const std::string& filename, std::vector<float> blsThresholds_, Alphabet alphabet, int type, std::pair<short, short> l, int maxDegeneration);
+  static void readOrthologousFamily(const int mode, const std::string& filename, const std::vector<float> blsThresholds_, const Alphabet alphabet, const int type, const std::pair<short, short> l, const int maxDegeneration);
 
-  static void readOrthologousFamily(const int mode, std::istream& ifs, std::vector<float> blsThresholds_, Alphabet alphabet, int type, std::pair<short, short> l, int maxDegeneration) ;
+  static void readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet, const int type, const std::pair<short, short> l, const int maxDegeneration);
+
+  static void readGenes(std::istream& ifs, const int maxDegeneration, const short maxLen);
 };
 
 #endif
