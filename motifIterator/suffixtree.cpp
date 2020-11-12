@@ -850,7 +850,6 @@ SuffixTree::~SuffixTree()
                                 stack.push(node->getChildNumber(i));
 
                 delete node;
-                deletednodes++;
         }
 }
 
