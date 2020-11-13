@@ -87,15 +87,6 @@ int main(int argc, char* argv[])
                 GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
             else
                 GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
-        } else if (argc == 4) {
-            int maxDegeneration = std::stoi(argv[2]);
-            int maxLen = std::stoi(argv[3]);
-            if(strcmp(argv[1], "-") == 0)
-                GeneFamily::readGenes(std::cin, maxDegeneration, maxLen);
-            else {
-                std::ifstream ifs(argv[1]);
-                GeneFamily::readGenes(ifs, maxDegeneration, maxLen);
-            }
         } else {
             std::cerr << "usage: " << std::endl;
             std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen" << std::endl;
@@ -110,10 +101,6 @@ int main(int argc, char* argv[])
             std::cerr << "\tinput:\tInput file or '-' for stdin: ortho group file followed by a list of sorted motifs to find" << std::endl;
             std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
             std::cerr << "\tblsThresholdList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;
-            std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
-            std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
-            std::cerr << "FIND MOTIF LOCATIONS: ./motifIterator input degeneration maxlen" << std::endl;
-            std::cerr << "\tinput:\tInput file or '-' for stdin: sorted list of motifs, and a list of genes (fasta format) sepparated by one empty newline." << std::endl;
             std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
             std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
             return EXIT_FAILURE;

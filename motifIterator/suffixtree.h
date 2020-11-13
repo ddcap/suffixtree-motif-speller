@@ -525,8 +525,8 @@ private:
         size_t iteratorCount;
         size_t node_count = 0;
         std::vector<size_t> stringStartPositions; // indicates where new strings start
-        // std::vector<size_t> next_gene_locations; // identify genes
         std::vector<std::string> gene_names; // identify gene names
+        std::vector<size_t> next_gene_locations; // identify genes
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
@@ -564,8 +564,8 @@ public:
          */
         // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
         // SuffixTree(const std::string& T, bool hasReverseComplement);
-        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_);
-        //, std::vector<size_t> next_gene_locations_
+        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_, std::vector<size_t> next_gene_locations_);
+        //
 
         /**
          * Destructor
@@ -582,7 +582,6 @@ public:
         std::vector<std::pair<int, int>> matchIupacPatternWithPositions(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
 
         int matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen);
-        int locateIupacPatterns(std::vector<std::string> motifs, std::ostream& out, const int &maxDegenerateLetters, const short& maxlen);
         // TODO add same but with positions
         void matchPattern(const std::string& P, BLSScore& bls);
         void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, const float blsScore);

@@ -170,6 +170,7 @@ public:
     void writeBLSVector(const occurence_bits& occurence, std::ostream& out) const;
     char readBLSVectorInBinary(std::istream& in) const;
     bool greaterThanMinThreshold(const occurence_bits& occurence) const;
+    bool greaterThanThreshold(const occurence_bits& occurence, const int& blsThresholdIdx) const;
 };
 
 class IupacMask {

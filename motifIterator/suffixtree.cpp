@@ -630,14 +630,16 @@ std::ostream& out, const std::string &motif) const {
         getOccurrences(matchingNodes[i], occ);
     }
     std::sort(occ.begin(), occ.end());
-    int stringId = 1;
+    int stringId = 1, geneId = 1;
     size_t i = 0;
     while(occ[i] >= stringStartPositions[stringId]) { stringId++;} // find the correct string id for this occurence
-    out << gene_names[stringId-1] << (((stringId - 1) & 1) ? "@-" : "@+") << occ[i] - stringStartPositions[stringId-1];
+    while(occ[i] >= next_gene_locations[geneId]) { geneId++;} // find the correct string id for this occurence
+    out << gene_names[geneId-1] << (((stringId - 1) & 1) ? "@-" : "@+") << occ[i] - next_gene_locations[geneId-1];
     i++;
     for (; i< occ.size(); i++) {
         while(occ[i] >= stringStartPositions[stringId]) { stringId++;} // find the correct string id for this occurence
-        out << ';' << gene_names[stringId-1] << (((stringId - 1) & 1) ? "@-" : "@+")  << occ[i] - stringStartPositions[stringId-1];
+        while(occ[i] >= next_gene_locations[geneId]) { geneId++;} // find the correct string id for this occurence
+        out << ';' << gene_names[geneId-1] << (((stringId - 1) & 1) ? "@-" : "@+")  << occ[i] - next_gene_locations[geneId-1];
     }
     out << '\n';
 }
@@ -809,8 +811,8 @@ const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
 // ============================================================================
 
 
-SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_) :
-    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_)
+SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_, std::vector<size_t> next_gene_locations_) :
+    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_)
 {
         // assert(gene_names.size() + 1== next_gene_locations.size()); // locations has an extra -> 0 pos
         // for (size_t i = 0 ; i < stringStartPositions.size() - 1; i++) {
@@ -956,16 +958,21 @@ std::vector<std::pair<int, int>> SuffixTree::matchIupacPattern(const string& P, 
 
 
 int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen) {
-    std::string motif, lastmotif = "";
+    std::string line, motif, lastmotif = "";
     STPositionsPerLetter positions(maxlen, maxDegenerateLetters); // can be reused, if sorted order!
     positions.list[0].addSTPosition(root);
     size_t i =0;
     occurence_bits occurence;
+    int blsThresholdIdx = 0, tabIdx = 0;
 
     int count = 0;
-    std::getline(in, motif);
-    while (!motif.empty() && motif.compare("-") != 0 ) { // loop over motifs until empty line or line with - signaling the end
+    std::getline(in, line);
+    while (!line.empty()) { // loop over motifs until empty line or line with - signaling the end
         i = 0;
+        tabIdx = line.find_first_of('\t');
+        motif = line.substr(0, tabIdx);
+        blsThresholdIdx = std::stoi(line.substr(tabIdx + 1));
+        // std::cerr << motif << " @ " << blsThresholdIdx << std::endl;
         // check how much it matches with last motif
         while(motif[i] == lastmotif[i] && i < min(lastmotif.size(), motif.size()) ) {
             i++;
@@ -981,44 +988,11 @@ int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BL
             // }
             i++;
         }
-        if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanMinThreshold(occurence) ){
-            out << motif << "\t" << bls.getBLSScore(occurence) << '\n';
-        }
-        lastmotif = motif;
-        count++;
-        std::getline(in, motif);
-    }
-    return count;
-}
-int SuffixTree::locateIupacPatterns(std::vector<std::string> motifs, std::ostream& out, const int &maxDegenerateLetters, const short& maxlen) {
-    std::string motif, lastmotif = "";
-    STPositionsPerLetter positions(maxlen, maxDegenerateLetters); // can be reused, if sorted order!
-    positions.list[0].addSTPosition(root);
-    size_t i =0;
-    occurence_bits occurence;
-
-    int count = 0;
-    for(auto motif: motifs) {
-        i = 0;
-        // check how much it matches with last motif
-        while(motif[i] == lastmotif[i] && i < min(lastmotif.size(), motif.size()) ) {
-            i++;
-        }
-        // std::cerr << "reusing " << i << " positions" << std::endl;
-        while (!positions.list[i].empty() && i < motif.size()) {
-            // std::cerr << "i: " << i << " valid pos: " << positions.list[i].validPositions << std::endl;
-            advanceIupacCharacter(IupacMask::characterToMask[motif[i]], i, positions, occurence);
-            // std::cerr << "matching " << motif[i] << " has " << positions.list[i+1].validPositions << " locations and occurence " << occurence << std::endl;
-            // for(int j = 0; j < positions.list[i+1].validPositions; j++) {
-                // std::cerr << "pos: " << positions.list[i+1].list[j].getPositionInText() << ": " <<
-                // T.substr(positions.list[i+1].list[j].getPositionInText() - positions.list[i+1].list[j].getDepth(), i + 1) << std::endl;
-            // }
-            i++;
-        }
-        if(positions.list[motif.size()].validPositions > 0)
+        if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanThreshold(occurence, blsThresholdIdx) )
             getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, std::cout, motif);
         lastmotif = motif;
         count++;
+        std::getline(in, line);
     }
     return count;
 }
