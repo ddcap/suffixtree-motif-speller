@@ -623,8 +623,8 @@ void SuffixTree::getBestOccurence(std::vector<std::pair<int, int>>& positions, c
     }
 }
 void SuffixTree::getLeafPositionsAndPrint(const std::vector<STPosition>& matchingNodes, const size_t size,
-std::ostream& out, const std::string &motif) const {
-    out << motif << '\t';
+std::ostream& out, const std::string &motif, const float blsScore) const {
+    out << motif << "\t" << blsScore << '\t';
     std::vector<size_t> occ;
     for(size_t i = 0; i < size; i++) {
         getOccurrences(matchingNodes[i], occ);
@@ -989,7 +989,7 @@ int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BL
             i++;
         }
         if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanThreshold(occurence, blsThresholdIdx) )
-            getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, std::cout, motif);
+            getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, std::cout, motif, bls.getBLSScore(occurence));
         lastmotif = motif;
         count++;
         std::getline(in, line);

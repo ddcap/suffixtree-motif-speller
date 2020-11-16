@@ -586,7 +586,7 @@ public:
         void matchPattern(const std::string& P, BLSScore& bls);
         void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, const float blsScore);
         void getLeafPositionsAndPrint(const std::vector<STPosition>& matchingNodes, const size_t size,
-          std::ostream& out, const std::string &motif) const;
+          std::ostream& out, const std::string &motif, const float blsScore) const;
         size_t getMotifsIteratedCount() { return iteratorCount; }
 
 
