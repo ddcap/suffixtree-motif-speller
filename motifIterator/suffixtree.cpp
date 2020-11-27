@@ -231,7 +231,8 @@ void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex)
 void SuffixTree::addLeaf(const STPosition& pos, length_t suffixIndex, unsigned char currentbit)
 {
         addLeaf(pos, suffixIndex);
-        pos.node->getChild(T[suffixIndex + pos.getDepth()])->setOccurenceBitForGST(currentbit, reverseComplementFactor); // factor 2 means reversecomplement is added in the reference string!
+        unsigned char actual_occurence_bit = order_of_species_mapping[currentbit / reverseComplementFactor];
+        pos.node->getChild(T[suffixIndex + pos.getDepth()])->setOccurenceBitForGST(actual_occurence_bit); // factor 2 means reversecomplement is added in the reference string!
 }
 
 length_t SuffixTree::recComputeSLPhase1(STNode* node, vector<STNode*>& A)
@@ -811,8 +812,10 @@ const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
 // ============================================================================
 
 
-SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_, std::vector<size_t> next_gene_locations_) :
-    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_)
+SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
+std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_) :
+    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_),
+    order_of_species_mapping(order_of_species_mapping_)
 {
         // assert(gene_names.size() + 1== next_gene_locations.size()); // locations has an extra -> 0 pos
         // for (size_t i = 0 ; i < stringStartPositions.size() - 1; i++) {

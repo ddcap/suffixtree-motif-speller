@@ -25,6 +25,18 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     readOrthologousFamily(mode, ifs, blsThresholds_, alphabet, type, l, maxDegeneration);
 }
 
+size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std::string &val) {
+    auto it = find(v.begin(), v.end(), val);
+
+    // If element was found
+    int index = -1;
+    if (it != v.end())
+    {
+        index = it - v.begin();
+    }
+    return index;
+}
+
 
 void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet,
 const int type, const std::pair<short, short> l, const int maxDegeneration) {
@@ -32,6 +44,8 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
   while (ifs) {
     std::vector<size_t> stringStartPositions;
     std::vector<size_t> next_gene_locations;
+    std::vector<std::string> order_of_species;
+    std::vector<size_t> order_of_species_mapping;
     std::vector<std::string> gene_names;
     stringStartPositions.push_back(0);
     // READ DATA
@@ -44,12 +58,21 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     getline(ifs, newick);
     getline(ifs, line);
     N = std::stoi(line);
+    BLSScore bls(blsThresholds_, newick, N, order_of_species);
+    // int nr = 1;
+    // for(auto x : order_of_species) {
+        // std::cerr << std::bitset<16>(nr) << "\t" << x << std::endl;
+        // nr = nr << 1;
+    // }
     size_t current_pos = 0;
     next_gene_locations.push_back(current_pos);
     for (int i = 0; i < N; i++) {
         getline(ifs, line);
         // gene names
         std::vector<std::string> genes;
+        std::string species = line.substr(line.find_first_of('\t')+1);
+        // std::cerr << species << std::endl;
+        order_of_species_mapping.push_back(getIndexOfVector(order_of_species, species));
         line = line.substr(0, line.find_first_of('\t'));
         size_t start = 0;
         size_t end = line.find_first_of(' ', start);
@@ -112,9 +135,11 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
-    BLSScore bls(blsThresholds_, newick, N);
+    // std::cerr << newick << std::endl << bls << std::endl;
     // std::cout << T << std::flush;
-    SuffixTree ST(T, true, stringStartPositions, gene_names, next_gene_locations);
+    // for (auto x : order_of_species_mapping)
+        // std::cerr << x << std::endl;
+    SuffixTree ST(T, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping);
 
     if (mode == 1) {
         int count = ST.matchIupacPatterns(ifs, std::cout, bls, maxDegeneration, l.second);

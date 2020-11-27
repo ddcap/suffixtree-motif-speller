@@ -135,15 +135,15 @@ private:
 
     float calculateBLSScore(const occurence_bits& occurence) const;
     std::vector<int> calculateBLSVector(const float& bls) const;
-    void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot);
+    void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot, std::vector<std::string> &order_of_species);
     void prepAllCombinations(int used_bits);
 
 public:
     // example: ((BD1G15520:0.2688, OS03G38520:0.2688):0.0538, (SB01G015780:0.086, (ZM01G45380:1.0E-6,ZM05G08300:1.0E-6):0.086):0.2366);
-    BLSScore(std::vector<float> blsThresholds_, std::string newick, int species) : blsThresholds(blsThresholds_){
+    BLSScore(std::vector<float> blsThresholds_, std::string newick, int species, std::vector<std::string> &order_of_species) : blsThresholds(blsThresholds_){
         root = new BLSLinkedListNode();
         int leafnr = 0;
-        recReadBranch(0, leafnr, newick, root);
+        recReadBranch(0, leafnr, newick, root, order_of_species);
         prepAllCombinations(species);
     }
     ~BLSScore() {

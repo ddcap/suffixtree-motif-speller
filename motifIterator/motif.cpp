@@ -1,6 +1,7 @@
 
 
 #include "motif.h"
+#include <bitset>
 
 //MOTIF
 
@@ -172,11 +173,12 @@ void BLSScore::prepAllCombinations(int used_bits) {
     for (int i = 0; i < pow(2, used_bits); i++) {
         occurence_bits occurence(i);
         preparedBLS.push_back(calculateBLSScore(occurence));
+        // std::cerr << std::bitset<16>(occurence) << "\t" << calculateBLSScore(occurence) << "\n";
         preparedBLSVector.push_back(calculateBLSVector(preparedBLS[i]));
     }
 }
 
-void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot) {
+void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot, std::vector<std::string> &order_of_species) {
 
     // int startleafcount = leafcount;
     BLSLinkedListNode* currentnode = currentroot;
@@ -191,7 +193,7 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
             // add new branch start;
             newick.erase(0,1);
             BLSLinkedListNode* child = currentnode->addChild(recursion + 1);
-            recReadBranch(recursion + 1, leafcount, newick, child);
+            recReadBranch(recursion + 1, leafcount, newick, child, order_of_species);
             // std::cout << "rec[" << recursion << "] received children " << std::endl << *child << std::endl;
             BLSLinkedListNode* iterator = child;
             occurence_bits mask(0);
@@ -211,7 +213,7 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
         } else if(newick[0] == ':') { // get length of branch and either add a node or a length to the list of branches
             newick.erase(0,1);
             // read score
-            int charPosAfterScore = newick.find_first_not_of(".0123456789E-"); // E- for scientific score
+            int charPosAfterScore = newick.find_first_not_of(".0123456789Ee-"); // E- for scientific score
             float length = std::stof(newick.substr(0, charPosAfterScore));
             newick.erase(0, charPosAfterScore);
             currentnode->setLength(length);
@@ -223,6 +225,7 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
             newick.erase(0, doublepointposition);
             occurence_bits mask(0);
             mask |= 1 << leafcount;
+            order_of_species.push_back(name);
             // std::cout << "rec[" << recursion << "] reading leaf " << name << " @ " << leafcount  << " " << +mask << std::endl;
             currentnode->setMask(mask);
             leafcount++;

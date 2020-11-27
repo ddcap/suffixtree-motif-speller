@@ -99,10 +99,10 @@ public:
          * Sets the bit for string number 'occurenceBit' to true in a GST
          * @return occurenceBit is the number of the current string this suffix belongs to
          */
-        void setOccurenceBitForGST(unsigned char occurenceBit, int reverseComplementFactor) { // used in leaf
-            occurence |= 1 << (occurenceBit / reverseComplementFactor); // divide by 2 to take into account Reverse complement!
-            if(parent != NULL && !(parent->occurence &  (1 << (occurenceBit / reverseComplementFactor)) ) ) { // if parent and parent hasnt got this occurence set it!
-              parent->setOccurenceBitForGST(occurenceBit, reverseComplementFactor);
+        void setOccurenceBitForGST(unsigned char occurenceBit) { // used in leaf
+            occurence |= 1 << (occurenceBit ); // divide by 2 to take into account Reverse complement!
+            if(parent != NULL && !(parent->occurence &  (1 << (occurenceBit )) ) ) { // if parent and parent hasnt got this occurence set it!
+              parent->setOccurenceBitForGST(occurenceBit);
             }
         }
         void setOccurence(occurence_bits occurence_) {
@@ -527,6 +527,7 @@ private:
         std::vector<size_t> stringStartPositions; // indicates where new strings start
         std::vector<std::string> gene_names; // identify gene names
         std::vector<size_t> next_gene_locations; // identify genes
+        std::vector<size_t> order_of_species_mapping; // map species to correct index in the bls tree
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
@@ -564,7 +565,8 @@ public:
          */
         // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
         // SuffixTree(const std::string& T, bool hasReverseComplement);
-        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_, std::vector<size_t> next_gene_locations_);
+        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
+          std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_);
         //
 
         /**
