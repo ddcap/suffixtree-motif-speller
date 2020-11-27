@@ -33,6 +33,8 @@ size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std
     if (it != v.end())
     {
         index = it - v.begin();
+    } else {
+        std::cerr << "Species not found in bls tree, will crash, please provide the correct names in the tree and the sequences below. " << val << std::endl;
     }
     return index;
 }
@@ -60,7 +62,6 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     N = std::stoi(line);
     BLSScore bls(blsThresholds_, newick, N, order_of_species);
     // std::cerr << bls << std::endl;
-    // break; // todo remove this line!
     // int nr = 1;
     // for(auto x : order_of_species) {
     //     std::cerr << std::bitset<16>(nr) << "\t" << x << std::endl;

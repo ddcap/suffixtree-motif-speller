@@ -134,10 +134,12 @@ private:
     std::vector<float> blsThresholds;
     BLSLinkedListNode* root;
     std::vector<float> preparedBLS;
-    std::vector<std::vector<int> > preparedBLSVector;
+    // std::vector<std::vector<int> > preparedBLSVector;
+    std::vector<char> preparedBLSVector;
 
     float calculateBLSScore(const occurence_bits& occurence) const;
-    std::vector<int> calculateBLSVector(const float& bls) const;
+    // std::vector<int> calculateBLSVector(const float& bls) const;
+    char calculateBLSVector(const float& bls) const;
     void recReadBranch(int recursion, int& leafcount, std::string& newick, BLSLinkedListNode* currentroot, std::vector<std::string> &order_of_species);
     void prepAllCombinations(int used_bits);
 
@@ -168,7 +170,8 @@ public:
         return o;
     }
     float getBLSScore(const occurence_bits& occurence) const;
-    const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
+    const char* getBLSVector(const occurence_bits& occurence) const;
+    // const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
     void writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const;
     void writeBLSVector(const occurence_bits& occurence, std::ostream& out) const;
     char readBLSVectorInBinary(std::istream& in) const;

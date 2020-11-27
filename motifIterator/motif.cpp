@@ -251,41 +251,62 @@ float BLSScore::calculateBLSScore(const occurence_bits& occurence) const {
 float BLSScore::getBLSScore(const occurence_bits& occurence) const {
     return preparedBLS[occurence];
 }
-std::vector<int> BLSScore::calculateBLSVector(const float& bls) const {
+// TODO dont use vectors anymore but use unsigned char, indicating how many 1's -> how many BLS thresholds are met, assuming they are in ascending order!
+char BLSScore::calculateBLSVector(const float& bls) const {
     std::vector<int> ret;
-    ret.push_back(1); // should have already past first check!
-    size_t i = 1;
+    char i = 1;
     while(i < blsThresholds.size() && bls > blsThresholds[i]) {
-        ret.push_back(1);
         i++;
     }
-    for(; i < blsThresholds.size(); i++) {
-        ret.push_back(0);
-    }
-    return ret;
+    return i;
 }
-const std::vector<int>* BLSScore::getBLSVector(const occurence_bits& occurence) const {
+
+// std::vector<int> BLSScore::calculateBLSVector(const float& bls) const {
+//     std::vector<int> ret;
+//     ret.push_back(1); // should have already past first check!
+//     size_t i = 1;
+//     while(i < blsThresholds.size() && bls > blsThresholds[i]) {
+//         ret.push_back(1);
+//         i++;
+//     }
+//     for(; i < blsThresholds.size(); i++) {
+//         ret.push_back(0);
+//     }
+//     return ret;
+// }
+// const std::vector<int>* BLSScore::getBLSVector(const occurence_bits& occurence) const {
+const char* BLSScore::getBLSVector(const occurence_bits& occurence) const {
     return &preparedBLSVector[occurence];
 }
 
 void BLSScore::writeBLSVector(const occurence_bits& occurence, std::ostream& out) const {
     //write Vector
-    out << preparedBLSVector[occurence][0];
-    for (size_t i = 1; i < preparedBLSVector[occurence].size(); i++) {
-        out << "," << preparedBLSVector[occurence][i];
-    }
+    out << preparedBLSVector[occurence]; // [0];
+    // for (size_t i = 1; i < preparedBLSVector[occurence].size(); i++) {
+        // out << "," << preparedBLSVector[occurence][i];
+    // }
 }
 void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const {
     // assume this is only 1 byte (max 8 thresholds), and first bit is first threshold and so on...
-    char size = preparedBLSVector[occurence].size();
+    // char size = preparedBLSVector[occurence].size();
     // out.write(&size, 1);
 
+// TEST : print unsigned char of number of thresholds that are 1 -> one byte (unsigned) can have up to 256 thresholds!!!
+    out.write(&preparedBLSVector[occurence], 1);
+
+
     //write Vector
-    char toWrite = 0;
-    for(int i = 0; i < size; i++) { // was 8- size?? why??
-        toWrite |= preparedBLSVector[occurence][i] << i;
-    }
-    out.write(&toWrite, 1);
+    // char toWrite = 0; // convert to unsigned short int for more thresholds -> 16 thresholds
+    // int i = 0;
+    // for(; i < size; i++) {
+    //     toWrite |= preparedBLSVector[occurence][i] << i;
+    //     // if(i%8 == 7) { // write byte and reset for next
+    //         // out.write(&toWrite, 1);
+    //         // toWrite = 0;
+    //     // }
+    // }
+    // // if(i%8 != 7)
+    // out.write(&toWrite, 1);
 }
 char BLSScore::readBLSVectorInBinary(std::istream& in) const {
     char readChar = 0;
