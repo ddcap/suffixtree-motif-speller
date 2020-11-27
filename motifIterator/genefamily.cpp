@@ -59,10 +59,12 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     getline(ifs, line);
     N = std::stoi(line);
     BLSScore bls(blsThresholds_, newick, N, order_of_species);
+    // std::cerr << bls << std::endl;
+    // break; // todo remove this line!
     // int nr = 1;
     // for(auto x : order_of_species) {
-        // std::cerr << std::bitset<16>(nr) << "\t" << x << std::endl;
-        // nr = nr << 1;
+    //     std::cerr << std::bitset<16>(nr) << "\t" << x << std::endl;
+    //     nr = nr << 1;
     // }
     size_t current_pos = 0;
     next_gene_locations.push_back(current_pos);
@@ -135,7 +137,6 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
     // PROCESS DATA
     startChrono();
-    // std::cerr << newick << std::endl << bls << std::endl;
     // std::cout << T << std::flush;
     // for (auto x : order_of_species_mapping)
         // std::cerr << x << std::endl;

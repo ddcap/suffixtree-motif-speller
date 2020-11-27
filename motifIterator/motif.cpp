@@ -1,7 +1,7 @@
 
 
 #include "motif.h"
-#include <bitset>
+// #include <bitset>
 
 //MOTIF
 
@@ -137,17 +137,18 @@ float BLSLinkedListNode::getScore(const occurence_bits& occurence) {
     }
     if(count == 1) {
         if(list.front()->child != NULL) { // has children
-            score += list.front()->child->getScore(occurence); // add the children since this branch has more than 1 edges that need to be connected
+            float childscore = list.front()->child->getScore(occurence);
+            score += childscore; // add the children since this branch has more than 1 edges that need to be connected
         }
     } else if(count > 1) {
         for(auto node : list) {
             if(node->child != NULL) { // has children
                 score += node->length; // add length only if it hasnt been added before
-                score += node->child->getScore(occurence); // add the children since this branch has more than 1 edges that need to be connected
+                float childscore = node->child->getScore(occurence);
+                score += childscore; // add the children since this branch has more than 1 edges that need to be connected
             }
         }
     }
-
     return score;
 }
 
@@ -183,8 +184,8 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
     // int startleafcount = leafcount;
     BLSLinkedListNode* currentnode = currentroot;
     bool endofbranch = false;
-    // std::cout << "rec[" << recursion << "] starts at " << leafcount << std::endl;
-    // std::cout << "rec[" << recursion << "] node: " << currentnode << std::endl;
+    // std::cerr << "rec[" << recursion << "] starts at " << leafcount << std::endl;
+    // std::cerr << "rec[" << recursion << "] node: " << currentnode << std::endl;
     while(!newick.empty() && !endofbranch) {
         if(newick[0] == ';') { // end of line!
             // std::cout << "rec[" << recursion << "] ends all!" << std::endl;
@@ -194,16 +195,22 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
             newick.erase(0,1);
             BLSLinkedListNode* child = currentnode->addChild(recursion + 1);
             recReadBranch(recursion + 1, leafcount, newick, child, order_of_species);
-            // std::cout << "rec[" << recursion << "] received children " << std::endl << *child << std::endl;
             BLSLinkedListNode* iterator = child;
             occurence_bits mask(0);
+            int childcount = 0;
             while(iterator != NULL) {
-                // std::cout << "rec[" << recursion << "] child mask: " << +iterator->getMask() << std::endl;
+                childcount++;
+                // std::cerr << "rec[" << recursion << "] child mask: " << +iterator->getMask() << std::endl;
                 mask |= iterator->getMask();
                 iterator = iterator->getNext();
             }
+            if(child->getNext() == NULL) { // merging single child
+                currentnode->setChild(child->getChild());
+                currentnode->addLength(child->getLength());
+                delete child;
+            }
             currentnode->setMask(mask);
-            // std::cout << "rec[" << recursion << "] read branch with mask " << +mask << std::endl;
+            // std::cerr << "rec[" << recursion << "] read branch with mask " << +mask << std::endl;
         } else if (newick[0] == ')') {
             newick.erase(0,1);
             endofbranch = true;
@@ -216,8 +223,8 @@ void BLSScore::recReadBranch(int recursion, int& leafcount, std::string& newick,
             int charPosAfterScore = newick.find_first_not_of(".0123456789Ee-"); // E- for scientific score
             float length = std::stof(newick.substr(0, charPosAfterScore));
             newick.erase(0, charPosAfterScore);
-            currentnode->setLength(length);
-            // std::cout << "rec[" << recursion << "] read length: " << length << std::endl;
+            currentnode->addLength(length);
+            // std::cerr << "rec[" << recursion << "] read length: " << length << std::endl;
         } else {
             // read name + score
             int doublepointposition = newick.find_first_of(':');

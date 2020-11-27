@@ -112,12 +112,15 @@ public:
     void setLevel(int level_) { level = level_; }
     BLSLinkedListNode *addNext(int level_) { next = new BLSLinkedListNode(level_); return next;}
     BLSLinkedListNode *addChild(int level_) { child = new BLSLinkedListNode(level_); return child; }
+    BLSLinkedListNode *setChild(BLSLinkedListNode *newChild) { child = newChild; return child; }
     void setMask(occurence_bits mask_) {mask = mask_;}
     void setLength(float length_) {length = length_;}
+    void addLength(float length_) {length += length_;}
 
     BLSLinkedListNode *getChild() const { return child; }
     BLSLinkedListNode *getNext() const { return next; }
     occurence_bits getMask() const {return mask; }
+    float getLength() const {return length; }
 
     friend std::ostream& operator<< (std::ostream& o, const BLSLinkedListNode& b) {
         return b.write(o);
