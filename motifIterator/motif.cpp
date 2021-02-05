@@ -68,8 +68,39 @@ void Motif::writeMotifInBinary(const std::string& motif, const short &maxlen, st
         out.write(&toWrite, 1);
     }
 }
+void Motif::writeGroupIDAndMotifInBinary(const long &motifdata, const short &maxlen, std::ostream& out) {
+    writeGroupIDAndMotifInBinary(getStringRepresentation(motifdata), maxlen, out);
+}
+long Motif::getLongRepresentation(const std::string& motif) {
+    long val = 0;
+    char *valdata = (char*)&val;
+    char size = motif.length(); // assumes length isnt more than 255 chars
+    valdata[0] = size;
 
+    char numberOfBytes = (size + 1) >> 1; // works since this maxlen is non inclusive (< instead of <=)
+    for(int i = 0; i < numberOfBytes; i++) {
+        char toWrite = 0;
+        if(i*2 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2]].getMask() << 4;
+        if(i*2 + 1 < size)
+            toWrite |= IupacMask::characterToMask[motif[i*2+1]].getMask(); // << 4;
+        valdata[i+1] = toWrite;
+    }
+    return val;
+}
+std::string Motif::getStringRepresentation(const long& motif) {
+    char *valdata = (char*)&motif;
+    char length = valdata[0];
+    std::string motifstr = "";
+    char numberOfBytes = (length + 1) >> 1; // works since this maxlen is non inclusive (< instead of <=)
+    for(int i = 0; i < numberOfBytes; i++) {
+        motifstr += IupacMask::representation[(valdata[i+1] >> 4) & 0xf];
+        if(i*2 + 1 < length) motifstr += IupacMask::representation[valdata[i+1] & 0xf];
+    }
+    return motifstr;
+}
 void Motif::writeGroupIDAndMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out) {
+    // std::cerr << "writing " << motif << std::endl;
     char size = motif.length(); // assumes length isnt more than 255 chars
     // write size
     out.write(&size, 1);
@@ -251,7 +282,7 @@ float BLSScore::calculateBLSScore(const occurence_bits& occurence) const {
 float BLSScore::getBLSScore(const occurence_bits& occurence) const {
     return preparedBLS[occurence];
 }
-// TODO dont use vectors anymore but use unsigned char, indicating how many 1's -> how many BLS thresholds are met, assuming they are in ascending order!
+
 char BLSScore::calculateBLSVector(const float& bls) const {
     std::vector<int> ret;
     char i = 1;
@@ -321,6 +352,31 @@ bool BLSScore::greaterThanMinThreshold(const occurence_bits& occurence) const {
 bool BLSScore::greaterThanThreshold(const occurence_bits& occurence, const int& blsThresholdIdx) const {
     return blsThresholdIdx < blsThresholds.size() && preparedBLS[occurence] > blsThresholds[blsThresholdIdx];
 }
+
+blscounttype *BLSScore::createBlsVectorFromByte(const occurence_bits& occurence) const {
+    int val = preparedBLSVector[occurence];
+    // assert(val <= blsThresholds.size());
+    blscounttype *v = new blscounttype[blsThresholds.size()];
+    int i = 0;
+    for (i = 0; i < val; i++) {
+        v[i] = 1;
+    }
+    for (; i < blsThresholds.size(); i++) {
+        v[i] = 0; // make sure its 0
+    }
+    // std::cerr << "creating bls vec with " << val << std::endl;
+    return v;
+}
+
+void BLSScore::addByteToBlsVector(blscounttype *v, const occurence_bits& occurence) const {
+    int val = preparedBLSVector[occurence];
+    // assert(val <= blsThresholds.size());
+    for (int i = 0; i < val; i++) {
+        v[i] += 1;
+    }
+    // std::cerr << "adding to bls vec with " << val << std::endl;
+}
+
 
 // IUPACMASK
 char IupacMask::getRandomChar(char c) {

@@ -466,6 +466,20 @@ void SuffixTree::printMotifBinary(const short& maxlen, const std::string& curren
         motifCount++;
     }
 }
+void SuffixTree::addMotifToMap(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence) {
+    if(Motif::isGroupRepresentative(currentMotif)) {
+        // long motifdata = Motif::getLongRepresentation(currentMotif);
+        // tsl::sparse_map<long, blscounttype *>::const_iterator got = motifmap->find(motifdata);
+        // if ( got == motifmap->end() ) {
+        //     motifmap->emplace(motifdata, bls.createBlsVectorFromByte(occurence));
+        // } else {
+        //     bls.addByteToBlsVector(got->second, occurence);
+        // }
+        motifmap->addMotifToMap(currentMotif, 0, bls.getBLSVector(occurence)[0], bls.getBLSVectorSize());
+        motifCount++;
+    }
+}
+
 /**
 Recurse into the tree with degenerate letters, meaning we need a vector of positions we are currently at!
 with 3 N's the most number of positions is 4*4*4= 64 positions to check.
@@ -495,7 +509,11 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
             if(bls.greaterThanMinThreshold(occurence)) {
 
                if((unsigned char) currentMotif.length() >= l.first) { // print motif if correct length!
-                    (this->*printMotif)(l.second, currentMotif, bls, occurence, out);
+                    if(motifmap == NULL) {
+                        (this->*printMotif)(l.second, currentMotif, bls, occurence, out);
+                    } else {
+                        addMotifToMap(l.second, currentMotif, bls, occurence);
+                    }
                }
 
                 if((unsigned char) currentMotif.length() +  1 == l.second) { // max length reached, we do not recurse into the next extension
@@ -813,7 +831,7 @@ const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
 
 
 SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
-std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_) :
+std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_, MyMotifMap *motifmap_) : // tsl::sparse_map<long, blscounttype *> *motifmap_) :
     T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_),
     order_of_species_mapping(order_of_species_mapping_)
 {
@@ -827,7 +845,7 @@ std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_m
 
         // construct suffix tree using Ukonen's algorithm
         constructUkonen();
-
+        this->motifmap = motifmap_;
         // check if gene positions are correct
         // size_t start = 0, end = 0;
         // for(size_t i = 0; i < next_gene_locations.size(); i++) {

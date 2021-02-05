@@ -27,7 +27,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-        if (argc == 8) {
+        if (argc == 8 || argc == 9) {
             int mode = 0; // motif discovery
             int type = -1; // error if not given properly!
             if (strcmp(argv[2], "AB") == 0) { type = 0; std::cerr << "Alignment Based" << std::endl; };
@@ -52,11 +52,12 @@ int main(int argc, char* argv[])
 
             int maxDegeneration = std::stoi(argv[5]);
             std::pair<short, short> l(std::stoi(argv[6]), std::stoi(argv[7]));
+            bool countBls = (argc == 9 ? (strcmp(argv[8], "true") == 0) : false);
 
             if ((strcmp(argv[1], "-") == 0))
-                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
+                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration, countBls);
             else
-                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
+                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration, countBls);
         } else if (argc == 6) {
             int mode = 1; // find motif location
             int type = -1; // error if not given properly!
@@ -84,12 +85,12 @@ int main(int argc, char* argv[])
             std::pair<short, short> l(-1, maxLen);
 
             if ((strcmp(argv[1], "-") == 0))
-                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration);
+                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration, false);
             else
-                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration);
+                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration, false);
         } else {
             std::cerr << "usage: " << std::endl;
-            std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen" << std::endl;
+            std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen [countBls]" << std::endl;
             std::cerr << "\tinput:\tInput file or '-' for stdin." << std::endl;
             std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
             std::cerr << "\talphabet (int):\t0: Exact, 1: Exact And N, 2: Exact, Twofolds And N, 3: All" << std::endl;
@@ -97,6 +98,7 @@ int main(int argc, char* argv[])
             std::cerr << "\tdegeneration:\tNumber of degenerate characters." << std::endl;
             std::cerr << "\tminlen:\tMinimum motif length, inclusive (i.e. length >= minlen)." << std::endl;
             std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
+            std::cerr << "\tcountBls:\tIndicates whether valid motifs per BLS threshold should be counted. true or [false]." << std::endl;
             std::cerr << "MATCH MOTIFS: ./motifIterator input type blsThresholdList degeneration maxlen" << std::endl;
             std::cerr << "\tinput:\tInput file or '-' for stdin: ortho group file followed by a list of sorted motifs to find" << std::endl;
             std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;

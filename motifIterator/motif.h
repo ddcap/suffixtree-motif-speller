@@ -12,6 +12,7 @@
 
 #define N_BITS 16 // must be at least the maximum number of organisms
 typedef unsigned int occurence_bits; // define type here to easily expand number of bits in code!
+typedef unsigned short blscounttype;
 
 
 enum IUPAC {
@@ -59,6 +60,9 @@ public:
     static bool isGroupRepresentative(const std::string& read);
     static std::string getRepresentative(const std::string& read);
     static void writeGroupIDAndMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out);
+    static void writeGroupIDAndMotifInBinary(const long &motifdata, const short &maxlen, std::ostream& out);
+    static long getLongRepresentation(const std::string& motif);
+    static std::string getStringRepresentation(const long& motif);
     static void writeMotifInBinary(const std::string& motif, const short &maxlen, std::ostream& out);
     static void writeGroupIDAndMotif(const std::string& motif, std::ostream& out);
     static void writeMotif(const std::string& motif, std::ostream& out);
@@ -79,6 +83,8 @@ public:
 //     }
 //     size_t size() { return processedMotifs.size(); }
 // };
+
+
 
 class BLSLinkedListNode {
 private:
@@ -169,6 +175,7 @@ public:
         o << *bls.root << std::endl;
         return o;
     }
+    size_t getBLSVectorSize() const { return blsThresholds.size(); }
     float getBLSScore(const occurence_bits& occurence) const;
     const char* getBLSVector(const occurence_bits& occurence) const;
     // const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
@@ -177,18 +184,22 @@ public:
     char readBLSVectorInBinary(std::istream& in) const;
     bool greaterThanMinThreshold(const occurence_bits& occurence) const;
     bool greaterThanThreshold(const occurence_bits& occurence, const int& blsThresholdIdx) const;
+
+    blscounttype *createBlsVectorFromByte(const occurence_bits& occurence) const;
+    void addByteToBlsVector(blscounttype *v, const occurence_bits& occurence) const;
+
 };
 
 class IupacMask {
 private:
     unsigned char mask;
     static const std::vector<std::string> characterLists;
-    static const std::vector<char> representation;
 
 public:
     static const char FILLER = '-';
     static const char DELIMITER = '$';
     static const std::vector<IupacMask> characterToMask;
+    static const std::vector<char> representation;
     IupacMask() : mask(0) {}
     IupacMask(const IUPAC mask_ ) : mask(mask_) {}
 

@@ -27,12 +27,16 @@
 #include <unordered_set>
 #include <cassert>
 #include "motif.h"
+#include "motifmap.h"
+#include <tsl/sparse_map.h>
 
 // ============================================================================
 // (TYPE) DEFINITIONS AND PROTOTYPES
 // ============================================================================
 
 typedef uint32_t length_t;
+typedef unsigned short blscounttype;
+typedef SparseMotifMap MyMotifMap;
 
 // <position in T, position in Q, length of MEM>
 typedef std::tuple<size_t, size_t, size_t> MEMOcc;
@@ -528,6 +532,8 @@ private:
         std::vector<std::string> gene_names; // identify gene names
         std::vector<size_t> next_gene_locations; // identify genes
         std::vector<size_t> order_of_species_mapping; // map species to correct index in the bls tree
+        tsl::sparse_map<long, blscounttype *> *motifmap2 = NULL;
+        MyMotifMap *motifmap = NULL;
         // --------------------------------------------------------------------
 
         void recPrintMotifs(const std::pair<short, short>& l,
@@ -550,6 +556,8 @@ private:
         void printMotifBinary(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
         void printMotifString(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence, std::ostream& out);
 
+        void addMotifToMap(const short& maxlen, const std::string& currentMotif, const BLSScore& bls, const occurence_bits& occurence);
+
         printMotifPtr printMotif = &SuffixTree::printMotifBinary;
         // printMotifPtr printMotif = &SuffixTree::printMotifString;
 
@@ -566,7 +574,7 @@ public:
         // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
         // SuffixTree(const std::string& T, bool hasReverseComplement);
         SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
-          std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_);
+          std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_, MyMotifMap *motifmap_); // tsl::sparse_map<long, blscounttype *> *motifmap_
         //
 
         /**

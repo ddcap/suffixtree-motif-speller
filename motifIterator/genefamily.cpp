@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <tsl/sparse_map.h>
+
 #include "genefamily.h"
 
 std::chrono::time_point<std::chrono::system_clock> prevTime;
@@ -20,9 +22,9 @@ double stopChrono()
 }
 
 void GeneFamily::readOrthologousFamily(const int mode, const std::string& filename, const std::vector<float> blsThresholds_, const Alphabet alphabet,
-const int type, const std::pair<short, short> l, const int maxDegeneration) {
+const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
     std::ifstream ifs(filename.c_str());
-    readOrthologousFamily(mode, ifs, blsThresholds_, alphabet, type, l, maxDegeneration);
+    readOrthologousFamily(mode, ifs, blsThresholds_, alphabet, type, l, maxDegeneration, countBls);
 }
 
 size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std::string &val) {
@@ -41,8 +43,11 @@ size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std
 
 
 void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet,
-const int type, const std::pair<short, short> l, const int maxDegeneration) {
+const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
   int totalCount = 0;
+  tsl::sparse_map<long, blscounttype *> motif_to_blsvector_map2;
+  MyMotifMap motif_to_blsvector_map;
+  // motif_to_blsvector_map2.reserve(1*1000000);
   while (ifs) {
     std::vector<size_t> stringStartPositions;
     std::vector<size_t> next_gene_locations;
@@ -141,7 +146,9 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
     // std::cout << T << std::flush;
     // for (auto x : order_of_species_mapping)
         // std::cerr << x << std::endl;
-    SuffixTree ST(T, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping);
+    // TODO create a unsorted map here with long (motif) ->  blsvector
+    // TOOD use the sparsemap from tsl , and after outout -> long byte (size of blsvec) then x unsigned char
+    SuffixTree ST(T, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping, countBls ? &motif_to_blsvector_map : NULL);
 
     if (mode == 1) {
         int count = ST.matchIupacPatterns(ifs, std::cout, bls, maxDegeneration, l.second);
@@ -159,5 +166,25 @@ const int type, const std::pair<short, short> l, const int maxDegeneration) {
         std::cerr << "wrong mode given: " << mode << std::endl;
     }
   }
-  if (mode == 0) std::cerr << "total motifs counted: " << totalCount << std::endl;
+  if (mode == 0) {
+    // emit motifs from motif_to_blsvector_map
+    char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
+    long unique_count = 0;
+
+    // for (std::pair<long, blscounttype *> ele: motif_to_blsvector_map) {
+    //     // Do stuff
+    //     Motif::writeGroupIDAndMotifInBinary(ele.first, l.second, std::cout);
+    //     std::cout.write(&blsvectorsize, 1); // assume
+    //     for(size_t i = 0; i < blsThresholds_.size(); i++) {
+    //         std::cout.write((char*)&ele.second[i], sizeof(blscounttype));
+    //     }
+    //     delete ele.second;
+    //     unique_count++;
+    // }
+    motif_to_blsvector_map.recPrintAndDelete("", unique_count, std::cout, l.second, blsvectorsize);
+
+    std::cerr << "total motifs counted: " << totalCount ;
+    if(countBls) { std::cerr << " of which " << unique_count << " are unqiue"; }
+    std::cerr << std::endl;
+  }
 }
