@@ -518,6 +518,7 @@ private:
 
         // --------------------------------------------------------------------
         const std::string T;            // text to index
+        const std::string name;            // text to index
         STNode* root;                   // pointer to the root node
         static const std::vector<IupacMask> exactAlphabet;
         static const std::vector<IupacMask> exactAndNAlphabet;
@@ -573,7 +574,7 @@ public:
          */
         // SuffixTree(const std::string& T) : SuffixTree(T, false) {}
         // SuffixTree(const std::string& T, bool hasReverseComplement);
-        SuffixTree(const std::string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
+        SuffixTree(const std::string& T, const std::string& name, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
           std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_, MyMotifMap *motifmap_); // tsl::sparse_map<long, blscounttype *> *motifmap_
         //
 

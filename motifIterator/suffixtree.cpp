@@ -442,7 +442,7 @@ void SuffixTree::constructUkonen()
                         // std::cerr << *this << std::endl;
                 }
         }
-        std::cerr << "ST of length "<< T.size() <<  ", memory usage: " <<  ((sizeof(SuffixTree) + sizeof(STNode) * node_count) / 1024 / 1024) << "MB" << std::endl;
+        std::cerr << "[" << name << "] ST of length "<< T.size() <<  ", memory usage: " <<  ((sizeof(SuffixTree) + sizeof(STNode) * node_count) / 1024 / 1024) << "MB" << std::endl;
 }
 
 // Routines to explore SuffixTree
@@ -830,9 +830,9 @@ const std::vector<IupacMask> SuffixTree::exactAndAllDegenerateAlphabet ({
 // ============================================================================
 
 
-SuffixTree::SuffixTree(const string& T, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
+SuffixTree::SuffixTree(const string& T, const string& name, bool hasReverseComplement, std::vector<size_t> stringStartPositions_, std::vector<std::string> gene_names_,
 std::vector<size_t> next_gene_locations_, std::vector<size_t> order_of_species_mapping_, MyMotifMap *motifmap_) : // tsl::sparse_map<long, blscounttype *> *motifmap_) :
-    T(T), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_),
+    T(T), name(name), reverseComplementFactor(hasReverseComplement ? 2 : 1), stringStartPositions(stringStartPositions_), gene_names(gene_names_), next_gene_locations(next_gene_locations_),
     order_of_species_mapping(order_of_species_mapping_)
 {
         // assert(gene_names.size() + 1== next_gene_locations.size()); // locations has an extra -> 0 pos

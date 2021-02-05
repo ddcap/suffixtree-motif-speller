@@ -46,7 +46,8 @@ void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const 
 const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
   int totalCount = 0;
   tsl::sparse_map<long, blscounttype *> motif_to_blsvector_map2;
-  MyMotifMap motif_to_blsvector_map;
+  char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
+  MyMotifMap motif_to_blsvector_map(blsvectorsize);
   // motif_to_blsvector_map2.reserve(1*1000000);
   while (ifs) {
     std::vector<size_t> stringStartPositions;
@@ -139,8 +140,7 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
     }
     T.push_back(IupacMask::DELIMITER);
 
-    std::cerr << "T: " << T.length() << std::endl;
-    std::cerr << "[" << name << "] " << N << " gene families" << std::endl;
+    std::cerr << "[" << name << "] " << N << " gene families " << std::endl;
     // PROCESS DATA
     startChrono();
     // std::cout << T << std::flush;
@@ -148,7 +148,7 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
         // std::cerr << x << std::endl;
     // TODO create a unsorted map here with long (motif) ->  blsvector
     // TOOD use the sparsemap from tsl , and after outout -> long byte (size of blsvec) then x unsigned char
-    SuffixTree ST(T, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping, countBls ? &motif_to_blsvector_map : NULL);
+    SuffixTree ST(T, name, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping, countBls ? &motif_to_blsvector_map : NULL);
 
     if (mode == 1) {
         int count = ST.matchIupacPatterns(ifs, std::cout, bls, maxDegeneration, l.second);
@@ -160,7 +160,8 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
 
         totalCount += count;
         double elapsed = stopChrono();
-        std::cerr << "\33[2K\r[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
+        std::cerr << "[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl;
+        // std::cerr << "\33[2K\r[" << name << "] iterated over " << iteratorcount << " motifs" << std::endl; // clear beginning if progress is kept!
         std::cerr << "[" << name << "] counted " << count << " valid motifs in " << elapsed << "s" << std::endl;
     } else {
         std::cerr << "wrong mode given: " << mode << std::endl;
@@ -168,7 +169,6 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
   }
   if (mode == 0) {
     // emit motifs from motif_to_blsvector_map
-    char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
     long unique_count = 0;
 
     // for (std::pair<long, blscounttype *> ele: motif_to_blsvector_map) {

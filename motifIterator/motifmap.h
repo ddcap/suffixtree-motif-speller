@@ -21,17 +21,18 @@ public:
 class SparseMotifMap {
 private:
   SparseMotifMap *children;
-  char *childrenChars; //
-  unsigned char childrencount;
-  blscounttype *v;
-  void createBlsVectorFromByte(const int& val, const int &listSize);
-  void addByteToBlsVector(const int& val);
-  void initChildren(int iupac_value);
-  void addChild(int iupac_value);
-
+  // char *childrenChars; // first element here is the size! so we have 1/4 less memory per node!
+  // blscounttype *v;
+  void createBlsVectorFromByte(const int& val, const char &blsvectorsize);
+  void addByteToBlsVector(const int& val, const char &blsvectorsize);
+  void addChild(int iupac_value, const char &blsvectorsize);
+  int getFirstIndexOfChild(const char &blsvectorsize);
+  SparseMotifMap *getChildren(const char &blsvectorsize);
+  char *getBlsVector(const char &blsvectorsize);
+  char *getIupacMapping();
 public:
-  SparseMotifMap(): children(NULL), childrenChars(NULL), childrencount(0), v(NULL) { }
-  void addMotifToMap(const std::string &motif, const size_t pos, const int &val, const int &listSize);
+  SparseMotifMap(const char &blsvectorsize);
+  void addMotifToMap(const std::string &motif, const size_t pos, const int &val, const char &blsvectorsize);
   void recPrintAndDelete(const std::string currentmotif, long &unique_count, std::ostream &out, const short &maxlen, const char &blsvectorsize);
 };
 
