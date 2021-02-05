@@ -118,8 +118,9 @@ void SparseMotifMap::recPrintAndDelete(const std::string currentmotif, long &uni
               children[startIdx + iupac_mapping[i + 1]].recPrintAndDelete(currentmotif + IupacMask::representation[i + 1], unique_count, out, maxlen, blsvectorsize);
           }
       }
-      delete children;
+      free(children);
     }
+//    delete this;
 }
 
 void SparseMotifMap::addChild(int iupac_value, const char &blsvectorsize) {
