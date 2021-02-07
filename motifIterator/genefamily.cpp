@@ -42,7 +42,7 @@ size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std
 
 void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet,
 const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
-  int totalCount = 0;
+  size_t totalCount = 0;
   char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
   MyMotifMap motif_to_blsvector_map(blsvectorsize, l);
   while (ifs) {
