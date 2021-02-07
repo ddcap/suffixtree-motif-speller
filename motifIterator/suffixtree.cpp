@@ -475,7 +475,7 @@ void SuffixTree::addMotifToMap(const short& maxlen, const std::string& currentMo
         // } else {
         //     bls.addByteToBlsVector(got->second, occurence);
         // }
-        motifmap->addMotifToMap(currentMotif, 0, bls.getBLSVector(occurence)[0], bls.getBLSVectorSize());
+        motifmap->addMotifToMap(currentMotif, bls.getBLSVector(occurence)[0]);
         motifCount++;
     }
 }

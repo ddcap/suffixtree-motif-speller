@@ -2,8 +2,6 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <tsl/sparse_map.h>
-
 #include "genefamily.h"
 
 std::chrono::time_point<std::chrono::system_clock> prevTime;
@@ -45,10 +43,8 @@ size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std
 void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet,
 const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
   int totalCount = 0;
-  tsl::sparse_map<long, blscounttype *> motif_to_blsvector_map2;
   char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
-  MyMotifMap motif_to_blsvector_map(blsvectorsize);
-  // motif_to_blsvector_map2.reserve(1*1000000);
+  MyMotifMap motif_to_blsvector_map(blsvectorsize, l);
   while (ifs) {
     std::vector<size_t> stringStartPositions;
     std::vector<size_t> next_gene_locations;
@@ -170,6 +166,7 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
   if (mode == 0) {
     // emit motifs from motif_to_blsvector_map
     long unique_count = 0;
+    startChrono();
 
     // for (std::pair<long, blscounttype *> ele: motif_to_blsvector_map) {
     //     // Do stuff
@@ -181,10 +178,11 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
     //     delete ele.second;
     //     unique_count++;
     // }
-    motif_to_blsvector_map.recPrintAndDelete("", unique_count, std::cout, l.second, blsvectorsize);
+    motif_to_blsvector_map.recPrintAndDelete( unique_count, std::cout);
 
+    double elapsed = stopChrono();
     std::cerr << "total motifs counted: " << totalCount ;
-    if(countBls) { std::cerr << " of which " << unique_count << " are unqiue"; }
+    if(countBls) { std::cerr << " of which " << unique_count << " are unique [in " << elapsed << "s]"; }
     std::cerr << std::endl;
   }
 }

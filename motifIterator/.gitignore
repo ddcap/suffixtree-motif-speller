@@ -7,3 +7,7 @@ massif*
 create_test_motif_list_input.sh
 test*
 CLUSTER*
+*gch
+sparse-map
+cluster*
+*.sh
