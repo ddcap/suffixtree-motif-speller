@@ -135,10 +135,12 @@ void SparseMotifMapNode::recPrintAndDelete(const std::string currentmotif, long 
                 ((MotifMapLeafs *)&data[startIndexes.second + iupac_mapping[i + 1]])->printMotifsAndDeleteData(currentmotif + IupacMask::representation[i + 1], unique_count, out, range, blsvectorsize);
             }
         }
+        free(data); // WHY THIS NO GOOD????
     }
-    // if( pos == 3){
-    // malloc_trim(0); // this gives memory back to OS!
-    // }
+    if(pos == 2)  {
+    //    std::cerr << "freeing memory of node " <<  currentmotif << std::endl;
+        malloc_trim(0); // this gives memory back to OS!
+    }
 }
 
 // MOTIFMAPLEAFS
@@ -186,6 +188,9 @@ void MotifMapLeafs::printMotifsAndDeleteData(const std::string currentmotif, lon
                 std::cout.write((char*)&v[i], sizeof(blscounttype));
             }
             unique_count++;
+     //       if(unique_count % 1000000 == 0) {
+     //           std::cerr << "counted " << unique_count << std::endl;
+     //       }
         }
     }
     free(data);
@@ -205,4 +210,6 @@ void SparseMotifMap::addMotifToMap(const std::string &motif, const int &val) {
 }
 void SparseMotifMap::recPrintAndDelete(long &unique_count, std::ostream &out) {
     root->recPrintAndDelete("", unique_count, out, startIndexes, range, blsvectorsize);
+    // delete root;
+    malloc_trim(0); // this gives memory back to OS!
 };

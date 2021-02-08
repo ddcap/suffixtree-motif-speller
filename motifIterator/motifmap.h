@@ -48,11 +48,9 @@ private:
   // first few bytes are iupacchar to index map
   // next bytes are actual blsvector ordered according to previous map!
   void createNewBlsVector(const int& iupac_value, const int& val, const char &blsvectorsize);
-  void freeData() { free(data); }
 public:
   void init();
   MotifMapLeafs() : data(NULL) { init(); };
-  ~MotifMapLeafs() { free(data); };
   void addToBlsVector(const int& iupac_value, const int& val, const char &blsvectorsize);
   void printMotifsAndDeleteData(const std::string currentmotif, long &unique_count, std::ostream &out, const std::pair<short, short> &range, const char &blsvectorsize);
 };
