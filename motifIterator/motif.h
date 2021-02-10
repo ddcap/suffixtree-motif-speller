@@ -12,8 +12,8 @@
 
 #define N_BITS 16 // must be at least the maximum number of organisms
 typedef unsigned int occurence_bits; // define type here to easily expand number of bits in code!
-//typedef unsigned short blscounttype;
-typedef unsigned char  blscounttype;
+typedef unsigned short blscounttype;
+// typedef unsigned char  blscounttype;
 
 
 enum IUPAC {

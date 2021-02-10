@@ -34,8 +34,6 @@
 // ============================================================================
 
 typedef uint32_t length_t;
-//typedef unsigned short blscounttype;
-typedef unsigned char blscounttype;
 typedef SparseMotifMap MyMotifMap;
 
 // <position in T, position in Q, length of MEM>
