@@ -23,6 +23,7 @@
 #include <list>
 #include "suffixtree.h"
 #include "motif.h"
+#include "malloc.h"
 
 using namespace std;
 
@@ -874,6 +875,7 @@ SuffixTree::~SuffixTree()
 
                 delete node;
         }
+        malloc_trim(0); // this gives memory back to OS!
 }
 
 int SuffixTree::printMotifs(const std::pair<short, short>& l, const Alphabet alphabet, const int& maxDegenerateLetters, const BLSScore& bls, std::ostream& out, bool isAlignmentBased)
