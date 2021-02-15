@@ -183,7 +183,7 @@ void MotifMapLeafs::printMotifsAndDeleteData(const std::string currentmotif, lon
         if(iupac_mapping[i + 1] != -1) {
             blscounttype *v = (blscounttype *)&data[1 + IUPAC_FULL_COUNT + blsvectorsize*sizeof(blscounttype)*data[i + 1]];
             Motif::writeGroupIDAndMotifInBinary(currentmotif + IupacMask::representation[i + 1], range.second, out);
-            out.write(&blsvectorsize, 1); // assume
+            out.write(&blsvectorsize, 1); // assume less than 256
             for(int i = 0; i < blsvectorsize; i++) {
                 std::cout.write((char*)&v[i], sizeof(blscounttype));
             }
