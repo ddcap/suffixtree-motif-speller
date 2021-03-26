@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 
             int maxDegeneration = std::stoi(argv[5]);
             std::pair<short, short> l(std::stoi(argv[6]), std::stoi(argv[7]));
+            assert(l.first < l.second); // else empty range!
             bool countBls = (argc == 9 ? (strcmp(argv[8], "true") == 0) : false);
 
             if ((strcmp(argv[1], "-") == 0))

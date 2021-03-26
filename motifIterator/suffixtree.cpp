@@ -523,7 +523,7 @@ void SuffixTree::recPrintMotifs(const std::pair<short, short>& l,
                     recPrintMotifs(l, maxDegenerateLetters, bls, matchingNodes, currentMotif,
                                    (extension.isDegenerate() ? curDegenerateLetters + 1 : curDegenerateLetters), out);
                }
-            }
+           }
         }
     }
 }

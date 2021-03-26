@@ -1,5 +1,4 @@
-
-
+#include <string>
 #include "motif.h"
 // #include <bitset>
 
@@ -34,16 +33,17 @@ bool Motif::isRepresentative(const std::string& read) {
         i++;
     }
     // if the same, ie i == read.length -> RC wont be matched in the tree since it is the same!!1 so no need to save them to check if it already has passed in the motifs.
-    return i== read.length() || read[i] < complement[read[read.length() - 1 - i]];
+    return i == read.length() || read[i] < complement[read[read.length() - 1 - i]];
 }
 bool Motif::isGroupRepresentative(const std::string& read) {
     std::string group = getGroupID(read);
+    std::string rcgroup = getGroupID(ReverseComplement(read));
     size_t i = 0;
-    while (i < group.length() && group[i] == complement[group[group.length() - 1 - i]]) {
+    while (i < group.length() && group[i] == rcgroup[i]) {
         i++;
     }
     // if the same, ie i == read.length -> RC wont be matched in the tree since it is the same!!1 so no need to save them to check if it already has passed in the motifs.
-    return i== group.length() || group[i] < complement[group[group.length() - 1 - i]];
+    return i == group.length() || group[i] < rcgroup[i];
 }
 
 void Motif::writeMotif(const std::string& motif, std::ostream& out) {
@@ -285,7 +285,7 @@ float BLSScore::getBLSScore(const occurence_bits& occurence) const {
 
 char BLSScore::calculateBLSVector(const float& bls) const {
     std::vector<int> ret;
-    char i = 1;
+    char i = 0;
     while(i < blsThresholds.size() && bls > blsThresholds[i]) {
         i++;
     }
@@ -311,38 +311,10 @@ const char* BLSScore::getBLSVector(const occurence_bits& occurence) const {
 }
 
 void BLSScore::writeBLSVector(const occurence_bits& occurence, std::ostream& out) const {
-    //write Vector
-    out << preparedBLSVector[occurence]; // [0];
-    // for (size_t i = 1; i < preparedBLSVector[occurence].size(); i++) {
-        // out << "," << preparedBLSVector[occurence][i];
-    // }
+    out << std::to_string(preparedBLSVector[occurence]);
 }
 void BLSScore::writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const {
-    // assume this is only 1 byte (max 8 thresholds), and first bit is first threshold and so on...
-    // char size = preparedBLSVector[occurence].size();
-    // out.write(&size, 1);
-
-// TEST : print unsigned char of number of thresholds that are 1 -> one byte (unsigned) can have up to 256 thresholds!!!
-    out.write(&preparedBLSVector[occurence], 1);
-
-
-    //write Vector
-    // char toWrite = 0; // convert to unsigned short int for more thresholds -> 16 thresholds
-    // int i = 0;
-    // for(; i < size; i++) {
-    //     toWrite |= preparedBLSVector[occurence][i] << i;
-    //     // if(i%8 == 7) { // write byte and reset for next
-    //         // out.write(&toWrite, 1);
-    //         // toWrite = 0;
-    //     // }
-    // }
-    // // if(i%8 != 7)
-    // out.write(&toWrite, 1);
-}
-char BLSScore::readBLSVectorInBinary(std::istream& in) const {
-    char readChar = 0;
-    in.read(&readChar, 1);
-    return readChar;
+    out.write(&preparedBLSVector[occurence], 1); // char (max 256 thresholds) shows how many thresholds are reached
 }
 
 bool BLSScore::greaterThanMinThreshold(const occurence_bits& occurence) const {

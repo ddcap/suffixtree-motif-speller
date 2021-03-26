@@ -139,7 +139,7 @@ void SparseMotifMapNode::recPrintAndDelete(const std::string currentmotif, long 
     }
     if(pos == 2)  {
     //    std::cerr << "freeing memory of node " <<  currentmotif << std::endl;
-        malloc_trim(0); // this gives memory back to OS!
+        malloc_trim(0); // this gives memory back to OS! But don't do this too often
     }
 }
 

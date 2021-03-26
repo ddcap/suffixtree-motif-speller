@@ -11,3 +11,4 @@ CLUSTER*
 sparse-map
 cluster*
 *.sh
+googletest/

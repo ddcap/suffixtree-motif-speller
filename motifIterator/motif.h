@@ -17,21 +17,21 @@ typedef unsigned short blscounttype;
 
 
 enum IUPAC {
-    BASE_A =  0x1,
-    BASE_C =  0x2,
-    IUPAC_M = 0x3, // A or C
-    BASE_G =  0x4,
-    IUPAC_R = 0x5, // A or G
-    IUPAC_S = 0x6, // G or C
-    IUPAC_V = 0x7, // A or C or G
-    BASE_T =  0x8,
-    IUPAC_W = 0x9, // A or T
-    IUPAC_Y = 0xA, // C or T
-    IUPAC_H = 0xB, // A or C or T
-    IUPAC_K = 0xC, // G or T
-    IUPAC_D = 0xD, // A or G or T
-    IUPAC_B = 0xE, // C or G or T
-    IUPAC_N = 0xF
+    BASE_A =  0x1, // 0001
+    BASE_C =  0x2, // 0010
+    IUPAC_M = 0x3, // 0011 A or C
+    BASE_G =  0x4, // 0100
+    IUPAC_R = 0x5, // 0101 A or G
+    IUPAC_S = 0x6, // 0110 G or C
+    IUPAC_V = 0x7, // 0111 A or C or G
+    BASE_T =  0x8, // 1000
+    IUPAC_W = 0x9, // 1001 A or T
+    IUPAC_Y = 0xA, // 1010 C or T
+    IUPAC_H = 0xB, // 1011 A or C or T
+    IUPAC_K = 0xC, // 1100 G or T
+    IUPAC_D = 0xD, // 1101 A or G or T
+    IUPAC_B = 0xE, // 1110 C or G or T
+    IUPAC_N = 0xF  // 1111
 };
 
 /**
@@ -141,7 +141,6 @@ private:
     std::vector<float> blsThresholds;
     BLSLinkedListNode* root;
     std::vector<float> preparedBLS;
-    // std::vector<std::vector<int> > preparedBLSVector;
     std::vector<char> preparedBLSVector;
 
     float calculateBLSScore(const occurence_bits& occurence) const;
@@ -182,7 +181,6 @@ public:
     // const std::vector<int>* getBLSVector(const occurence_bits& occurence) const;
     void writeBLSVectorInBinary(const occurence_bits& occurence, std::ostream& out) const;
     void writeBLSVector(const occurence_bits& occurence, std::ostream& out) const;
-    char readBLSVectorInBinary(std::istream& in) const;
     bool greaterThanMinThreshold(const occurence_bits& occurence) const;
     bool greaterThanThreshold(const occurence_bits& occurence, const int& blsThresholdIdx) const;
 
