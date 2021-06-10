@@ -20,7 +20,7 @@ double stopChrono()
 }
 
 void GeneFamily::readOrthologousFamily(const int mode, const std::string& filename, const std::vector<float> blsThresholds_, const Alphabet alphabet,
-const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
+const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls, const float min_bls) {
     std::ifstream ifs(filename.c_str());
     readOrthologousFamily(mode, ifs, blsThresholds_, alphabet, type, l, maxDegeneration, countBls);
 }
@@ -41,7 +41,7 @@ size_t GeneFamily::getIndexOfVector(const std::vector<std::string> &v, const std
 
 
 void GeneFamily::readOrthologousFamily(const int mode, std::istream& ifs, const std::vector<float> blsThresholds_, const Alphabet alphabet,
-const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls) {
+const int type, const std::pair<short, short> l, const int maxDegeneration, const bool countBls, const float min_bls) {
   size_t totalCount = 0;
   char blsvectorsize = (unsigned char)blsThresholds_.size(); // assume its less than 256
   MyMotifMap motif_to_blsvector_map(blsvectorsize, l);
@@ -139,7 +139,7 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
     std::cerr << "[" << name << "] " << N << " gene families " << std::endl;
     // PROCESS DATA
     startChrono();
-    // std::cout << T << std::flush;
+    // std::cerr << T << std::flush;
     // for (auto x : order_of_species_mapping)
         // std::cerr << x << std::endl;
     // TODO create a unsorted map here with long (motif) ->  blsvector
@@ -147,7 +147,7 @@ const int type, const std::pair<short, short> l, const int maxDegeneration, cons
     SuffixTree ST(T, name, true, stringStartPositions, gene_names, next_gene_locations, order_of_species_mapping, countBls ? &motif_to_blsvector_map : NULL);
 
     if (mode == 1) {
-        int count = ST.matchIupacPatterns(ifs, std::cout, bls, maxDegeneration, l.second);
+        int count = ST.matchIupacPatterns(ifs, std::cout, bls, maxDegeneration, l.second, min_bls);
         double elapsed = stopChrono();
         std::cerr << "[" << name << "] " << count <<  " motifs located in " << elapsed << "s" << std::endl;
     } else if (mode == 0) {

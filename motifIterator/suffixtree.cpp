@@ -436,7 +436,7 @@ void SuffixTree::constructUkonen()
 
                         numLeaves++;
                         if(numLeaves == stringStartPositions[currentNumLeavesStart]) {
-                            // std::cout << "incrementing currentleafbit at " << T[numLeaves] << std::endl;
+                            // std::cerr << "incrementing currentleafbit at " << T[numLeaves] << std::endl;
                             currentleafbit++;
                             currentNumLeavesStart++;
                         } // if previous character where the suffix starts is # then a new string has started so increment currentleafbit
@@ -980,7 +980,7 @@ std::vector<std::pair<int, int>> SuffixTree::matchIupacPattern(const string& P, 
 }
 
 
-int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen) {
+int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen, const float& min_bls) {
     std::string line, motif, lastmotif = "";
     STPositionsPerLetter positions(maxlen, maxDegenerateLetters); // can be reused, if sorted order!
     positions.list[0].addSTPosition(root);
@@ -988,6 +988,7 @@ int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BL
     occurence_bits occurence;
     int blsThresholdIdx = 0, tabIdx = 0;
 
+    std::cerr << "min bls is " << min_bls << std::endl;
     int count = 0;
     std::getline(in, line);
     while (!line.empty()) { // loop over motifs until empty line or line with - signaling the end
@@ -1011,8 +1012,8 @@ int SuffixTree::matchIupacPatterns(std::istream& in, std::ostream& out, const BL
             // }
             i++;
         }
-        if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanThreshold(occurence, blsThresholdIdx) )
-            getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, std::cout, motif, bls.getBLSScore(occurence));
+        if(positions.list[motif.size()].validPositions > 0 && bls.greaterThanThreshold(occurence, blsThresholdIdx) && bls.getBLSScore(occurence) > min_bls)
+            getLeafPositionsAndPrint(positions.list[motif.size()].list, positions.list[motif.size()].validPositions, out, motif, bls.getBLSScore(occurence));
         lastmotif = motif;
         count++;
         std::getline(in, line);

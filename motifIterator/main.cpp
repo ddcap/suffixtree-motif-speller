@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
                 GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration, countBls);
             else
                 GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration, countBls);
-        } else if (argc == 6) {
+        } else if (argc == 6 || argc == 7) {
             int mode = 1; // find motif location
             int type = -1; // error if not given properly!
             if (strcmp(argv[2], "AB") == 0) { type = 0; std::cerr << "Alignment Based" << std::endl; };
@@ -84,11 +84,12 @@ int main(int argc, char* argv[])
             int maxDegeneration = std::stoi(argv[4]);
             int maxLen = std::stoi(argv[5]);
             std::pair<short, short> l(-1, maxLen);
+            float min_bls = (argc == 7 ? std::stof(argv[6]) : 0);
 
             if ((strcmp(argv[1], "-") == 0))
-                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration, false);
+                GeneFamily::readOrthologousFamily(mode, std::cin, blsThresholds, alphabet, type, l, maxDegeneration, false, min_bls);
             else
-                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration, false);
+                GeneFamily::readOrthologousFamily(mode, argv[1], blsThresholds, alphabet, type, l, maxDegeneration, false, min_bls);
         } else {
             std::cerr << "usage: " << std::endl;
             std::cerr << "DISCOVERY: ./motifIterator input type alphabet blsThresholdList degeneration minlen maxlen [countBls]" << std::endl;
@@ -100,7 +101,7 @@ int main(int argc, char* argv[])
             std::cerr << "\tminlen:\tMinimum motif length, inclusive (i.e. length >= minlen)." << std::endl;
             std::cerr << "\tmaxlen:\tMaximum motif length, non inclusive (i.e. length < maxlen)." << std::endl;
             std::cerr << "\tcountBls:\tIndicates whether valid motifs per BLS threshold should be counted. true or [false]." << std::endl;
-            std::cerr << "MATCH MOTIFS: ./motifIterator input type blsThresholdList degeneration maxlen" << std::endl;
+            std::cerr << "MATCH MOTIFS: ./motifIterator input type blsThresholdList degeneration maxlen [bls_threshold]" << std::endl;
             std::cerr << "\tinput:\tInput file or '-' for stdin: ortho group file followed by a list of sorted motifs to find" << std::endl;
             std::cerr << "\ttype:\tAB or AF for alignment based or alignment free motif discovery" << std::endl;
             std::cerr << "\tblsThresholdList:\tComma sepparated list of bls thresholds (between 0 to 1). Example '0.15,0.5,0.6,0.7,0.9,0.95'" << std::endl;

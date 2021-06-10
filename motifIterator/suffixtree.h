@@ -589,7 +589,7 @@ public:
         std::vector<std::pair<int, int>> matchIupacPattern(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
         std::vector<std::pair<int, int>> matchIupacPatternWithPositions(const std::string& P, const BLSScore& bls, int maxDegenerateLetters, occurence_bits& occurence);
 
-        int matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen);
+        int matchIupacPatterns(std::istream& in, std::ostream& out, const BLSScore& bls, const int &maxDegenerateLetters, const short& maxlen, const float& min_bls);
         // TODO add same but with positions
         void matchPattern(const std::string& P, BLSScore& bls);
         void printMotifPositions(std::ostream& out, const std::string &motif, std::vector<std::pair<int, int>> positions, const float blsScore);
